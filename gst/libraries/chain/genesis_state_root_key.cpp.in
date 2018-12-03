@@ -1,0 +1,12 @@
+/**
+ *  @file
+ *  @copyright defined in gst/LICENSE.txt
+ */
+
+#include <gstio/chain/genesis_state.hpp>
+
+namespace gstio { namespace chain {
+
+const string genesis_state::gstio_root_key = "${GSTIO_ROOT_KEY}";
+
+} } // namespace gstio::chain

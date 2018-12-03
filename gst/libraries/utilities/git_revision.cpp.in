@@ -1,0 +1,14 @@
+#include <stdint.h>
+#include <gst/utilities/git_revision.hpp>
+
+#define GST_GIT_REVISION_SHA "@GST_GIT_REVISION_SHA@"
+#define GST_GIT_REVISION_UNIX_TIMESTAMP @GST_GIT_REVISION_UNIX_TIMESTAMP@
+#define GST_GIT_REVISION_DESCRIPTION "@GST_GIT_REVISION_DESCRIPTION@"
+
+namespace gstio { namespace utilities {
+
+const char* const git_revision_sha = GST_GIT_REVISION_SHA;
+const uint32_t git_revision_unix_timestamp = GST_GIT_REVISION_UNIX_TIMESTAMP;
+const char* const git_revision_description = GST_GIT_REVISION_DESCRIPTION;
+
+} } // end namespace gstio::utilities

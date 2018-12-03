@@ -1,0 +1,122 @@
+#!/bin/bash
+
+# set up a wallet just for holding the key used during blockchain ignition
+
+bioshost=$BIOS_HOSTNAME
+if [ -z "$bioshost" ]; then
+   bioshost=localhost
+fi
+
+biosport=$BIOS_HTTP_PORT
+if [ -z "$biosport" ]; then
+    biosport=9776
+fi
+
+wddir=gstio-ignition-wd
+wdaddr=localhost:8899
+wdurl=http://$wdaddr
+# Manual deployers, add a line below this block that looks like:
+#    bioshost=$BIOS_HOSTNAME
+#    biosport=$BIOS_HTTP_PORT
+#    cnt_dir=$CONTRACT_DIR
+#    sys=$SYS_CONTRACT
+# where $BIOS_HOSTNAME is replaced by the hostname portion of the http-server-address configured
+# for the nodgst instance running to bios producer
+# ------ DO NOT ALTER THE NEXT LINE -------
+###INSERT envars
+
+logfile=$wddir/bootlog.txt
+
+if [ -e $wddir ]; then
+    rm -rf $wddir
+fi
+mkdir $wddir
+
+step=1
+echo Initializing ignition sequence  at $(date) | tee $logfile
+
+echo "http-server-address = $wdaddr" > $wddir/config.ini
+
+programs/kgstd/kgstd --config-dir $wddir --data-dir $wddir 2> $wddir/wdlog.txt &
+echo $$ > ignition_wallet.pid
+echo kgstd log in $wddir/wdlog.txt >> $logfile
+sleep 1
+
+ecmd () {
+    echo ===== Start: $step ============ >> $logfile
+    echo executing: clgst --wallet-url $wdurl --url http://$bioshost:$biosport $* | tee -a $logfile
+    echo ----------------------- >> $logfile
+    programs/clgst/clgst  --wallet-url $wdurl --url http://$bioshost:$biosport $* >> $logfile 2>&1
+    echo ==== End: $step ============== >> $logfile
+    step=$(($step + 1))
+}
+
+wcmd () {
+    ecmd wallet $*
+}
+
+cacmd () {
+    programs/clgst/clgst  --wallet-url $wdurl --url http://$bioshost:$biosport system newaccount --transfer --stake-net "10000000.0000 SYS" --stake-cpu "10000000.0000 SYS"  --buy-ram "10000000.0000 SYS" gstio $* >> $logfile 2>&1
+    ecmd system regproducer $1 $2
+    ecmd system voteproducer prods $1 $1
+}
+
+sleep 2
+ecmd get info
+
+wcmd create --to-console -n ignition
+
+# Manual deployers, add a line below this block that looks like:
+#    wcmd import -n ignition --private-key $PRODKEY[0]
+#    wcmd import -n ignition --private-key $PRODKEY[1]
+#    ...
+#    wcmd import -n ignition --private-key $PRODKEY[20]
+# where $BIOSKEY is replaced by the private key for the bios node
+# ------ DO NOT ALTER THE NEXT LINE -------
+###INSERT prodkeys
+
+ecmd set contract gstio contracts/gstio.bios gstio.bios.wasm gstio.bios.abi
+
+# Create required system accounts
+ecmd create key --to-console
+pubsyskey=`grep "^Public key:" $logfile | tail -1 | sed "s/^Public key://"`
+prisyskey=`grep "^Private key:" $logfile | tail -1 | sed "s/^Private key://"`
+echo gstio.* keys: $prisyskey $pubsyskey >> $logfile
+wcmd import -n ignition --private-key $prisyskey
+ecmd create account gstio gstio.bpay $pubsyskey $pubsyskey
+ecmd create account gstio gstio.msig $pubsyskey $pubsyskey
+ecmd create account gstio gstio.names $pubsyskey $pubsyskey
+ecmd create account gstio gstio.ram $pubsyskey $pubsyskey
+ecmd create account gstio gstio.ramfee $pubsyskey $pubsyskey
+ecmd create account gstio gstio.saving $pubsyskey $pubsyskey
+ecmd create account gstio gstio.stake $pubsyskey $pubsyskey
+ecmd create account gstio gstio.token $pubsyskey $pubsyskey
+ecmd create account gstio gstio.vpay $pubsyskey $pubsyskey
+ecmd create account gstio gstio.sudo $pubsyskey $pubsyskey
+
+ecmd set contract gstio.token contracts/gstio.token gstio.token.wasm gstio.token.abi
+ecmd set contract gstio.msig contracts/gstio.msig gstio.msig.wasm gstio.msig.abi
+ecmd set contract gstio.sudo contracts/gstio.sudo gstio.sudo.wasm gstio.sudo.abi
+
+echo ===== Start: $step ============ >> $logfile
+echo executing: clgst --wallet-url $wdurl --url http://$bioshost:$biosport push action gstio.token create '[ "gstio", "10000000000.0000 SYS" ]' -p gstio.token | tee -a $logfile
+echo executing: clgst --wallet-url $wdurl --url http://$bioshost:$biosport push action gstio.token issue '[ "gstio", "1000000000.0000 SYS", "memo" ]' -p gstio | tee -a $logfile
+echo ----------------------- >> $logfile
+programs/clgst/clgst --wallet-url $wdurl --url http://$bioshost:$biosport push action gstio.token create '[ "gstio", "10000000000.0000 SYS" ]' -p gstio.token >> $logfile 2>&1
+programs/clgst/clgst --wallet-url $wdurl --url http://$bioshost:$biosport push action gstio.token issue '[ "gstio", "1000000000.0000 SYS", "memo" ]' -p gstio >> $logfile 2>&1
+echo ==== End: $step ============== >> $logfile
+step=$(($step + 1))
+
+ecmd set contract gstio contracts/gstio.system gstio.system.wasm gstio.system.abi
+
+# Manual deployers, add a series of lines below this block that looks like:
+#    cacmd $PRODNAME[0] $OWNERKEY[0] $ACTIVEKEY[0]
+#    cacmd $PRODNAME[1] $OWNERKEY[1] $ACTiVEKEY[1]
+#    ...
+#    cacmd $PRODNAME[20] $OWNERKEY[20] $ACTIVEKEY[20]
+# where $PRODNAME is the producer account name and $OWNERKEY and $ACTIVEKEY are both the producer's
+# public key
+# ------ DO NOT ALTER THE NEXT LINE -------
+###INSERT cacmd
+
+pkill -15 kgstd

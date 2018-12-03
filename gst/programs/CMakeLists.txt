@@ -1,0 +1,6 @@
+add_subdirectory( nodgst )
+add_subdirectory( clgst )
+add_subdirectory( kgstd )
+add_subdirectory( gstio-launcher )
+add_subdirectory( gstio-abigen )
+add_subdirectory( gstio-blocklog )
