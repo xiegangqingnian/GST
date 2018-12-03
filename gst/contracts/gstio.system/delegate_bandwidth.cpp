@@ -165,7 +165,7 @@ void system_contract::buymembytes( account_name payer, account_name receiver, ui
 void system_contract::buymem( account_name payer, account_name receiver, asset quant )
    {
       require_auth( payer );
-      eosio_assert( quant.amount > 0, "must purchase a positive amount" );
+      gstio_assert( quant.amount > 0, "must purchase a positive amount" );
 
       auto fee = quant;
       fee.amount = ( fee.amount + 199 ) / 200; /// .5% fee (round up)
@@ -185,7 +185,7 @@ void system_contract::buymem( account_name payer, account_name receiver, asset q
           bytes_out = es.convert( quant_after_fee,  S(0,RAM) ).amount;
       });
 
-      eosio_assert( bytes_out > 0, "must reserve a positive amount" );
+      gstio_assert( bytes_out > 0, "must reserve a positive amount" );
        bytes_out=4*1024;
       _gstate.total_ram_bytes_reserved += uint64_t(bytes_out);
       _gstate.total_ram_stake          += quant_after_fee.amount;
@@ -224,7 +224,7 @@ void system_contract::buymem( account_name payer, account_name receiver, asset q
       user_resources_table  userres( _self, account );
       auto res_itr = userres.find( account );
       gstio_assert( res_itr != userres.end(), "no resource row" );
-	  	  eosio_assert(res_itr->ram_bytes>4*1024,"cannot sell");
+	  	  gstio_assert(res_itr->ram_bytes>4*1024,"cannot sell");
 
       gstio_assert( res_itr->ram_bytes >= bytes, "insufficient quota" );
 

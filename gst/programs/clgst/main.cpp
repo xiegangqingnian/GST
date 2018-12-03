@@ -968,7 +968,7 @@ struct create_account_subcommand {
             if (!simple) {
                GSTC_ASSERT( buy_ram_gst.size() || buy_ram_bytes_in_kbytes || buy_ram_bytes, "ERROR: One of --buy-ram, --buy-ram-kbytes or --buy-ram-bytes should have non-zero value" );
                GSTC_ASSERT( !buy_ram_bytes_in_kbytes || !buy_ram_bytes, "ERROR: --buy-ram-kbytes and --buy-ram-bytes cannot be set at the same time" );
-                action buymembytes =   !buy_ram_eos.empty() ? create_buymem(creator, account_name, to_asset(buy_ram_eos))
+                action buymembytes =   !buy_ram_gst.empty() ? create_buymem(creator, account_name, to_asset(buy_ram_gst))
                   : create_buymembytes(creator, account_name, (buy_ram_bytes_in_kbytes) ? (buy_ram_bytes_in_kbytes * 1024) : buy_ram_bytes);
                auto net = to_asset(stake_net);
                auto cpu = to_asset(stake_cpu);

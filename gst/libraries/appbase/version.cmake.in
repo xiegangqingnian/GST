@@ -12,7 +12,7 @@ execute_process(
 #if(NOT ${res} STREQUAL "0")
 #  message(FATAL_ERROR "git describe failed")
 #endif()
-##unsure if this next is possible but just a failsafe
+#unsure if this next is possible but just a failsafe
 #if("${VERSION_STRING}" STREQUAL "")
 #  set(VERSION_STRING "unknown")
 #endif()

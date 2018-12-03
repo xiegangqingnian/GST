@@ -118,9 +118,10 @@
       done
    fi
 
-   if [ ! -d "${SOURCE_DIR}/.git" ]; then
+  if [ ! -d "${SOURCE_DIR}/../.git" ]; then
       printf "\\n\\tThis build script only works with sources cloned from git\\n"
-      printf "\\tPlease clone a new gst directory with 'git clone https://github.com/a6lian/gstlian --recursive'\\n"
+      printf "\\tPlease clone a new eos directory with 'git clone https://github.com/EOSIO/eos --recursive'\\n"
+      printf "\\tSee the wiki for instructions: https://github.com/EOSIO/eos/wiki\\n"
       exit 1
    fi
 
