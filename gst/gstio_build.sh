@@ -1,7 +1,7 @@
 #!/bin/bash
 ##########################################################################
 # This is the GSTIO automated install script for Linux and Mac OS.
-# This file was downloaded from https://github.com/a6lian/gstlian
+# This file was downloaded from https://github.com/gsthot/gst.git
 #
 # Copyright (c) 2017, Respective Authors all rights reserved.
 #
@@ -26,8 +26,6 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-#
-# https://github.com/a6lian/gstlian/master/LICENSE
 ##########################################################################
 
    SOURCE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -120,8 +118,7 @@
 
   if [ ! -d "${SOURCE_DIR}/../.git" ]; then
       printf "\\n\\tThis build script only works with sources cloned from git\\n"
-      printf "\\tPlease clone a new eos directory with 'git clone https://github.com/EOSIO/eos --recursive'\\n"
-      printf "\\tSee the wiki for instructions: https://github.com/EOSIO/eos/wiki\\n"
+      printf "\\tPlease clone a new eos directory with 'git clone https://github.com/gsthot/gst.git --recursive'\\n"
       exit 1
    fi
 
@@ -297,8 +294,4 @@
    print_instructions
 
    printf "\\tFor more information:\\n"
-   printf "\\tGSTIO website: https://gst.io\\n"
-   printf "\\tGSTIO Telegram channel @ https://t.me/GSTProject\\n"
-   printf "\\tGSTIO resources: https://gst.io/resources/\\n"
-   printf "\\tGSTIO Stack Exchange: https://gstio.stackexchange.com\\n"
-   printf "\\tGSTIO wiki: https://github.com/GSTIO/gst/wiki\\n\\n\\n"
+   printf "\\tGSTIO website: https://github.com/gsthot/gst\\n"
