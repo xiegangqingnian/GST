@@ -524,6 +524,34 @@ chain::action create_action(const vector<permission_level>& authorization, const
    return chain::action{authorization, code, act, variant_to_bin(code, act, args)};
 }
 
+
+
+
+chain::action create_buymembytes(const name& creator, const name& newaccount, uint32_t numbytes) {
+   fc::variant act_payload = fc::mutable_variant_object()
+         ("payer", creator.to_string())
+         ("receiver", newaccount.to_string())
+         ("bytes", numbytes);
+   return create_action(tx_permission.empty() ? vector<chain::permission_level>{{creator,config::active_name}} : get_account_permissions(tx_permission),
+                        config::system_account_name, N(buymembytes), act_payload);
+}
+
+chain::action create_buymem(const name& creator, const name& newaccount, const asset& quantity) {
+   fc::variant act_payload = fc::mutable_variant_object()
+         ("payer", creator.to_string())
+         ("receiver", newaccount.to_string())
+         ("quant", quantity.to_string());
+   return create_action(tx_permission.empty() ? vector<chain::permission_level>{{creator,config::active_name}} : get_account_permissions(tx_permission),
+                        config::system_account_name, N(buymem), act_payload);
+}
+
+
+
+
+
+
+
+
 chain::action create_buyram(const name& creator, const name& newaccount, const asset& quantity) {
    fc::variant act_payload = fc::mutable_variant_object()
          ("payer", creator.to_string())
@@ -940,7 +968,7 @@ struct create_account_subcommand {
             if (!simple) {
                GSTC_ASSERT( buy_ram_gst.size() || buy_ram_bytes_in_kbytes || buy_ram_bytes, "ERROR: One of --buy-ram, --buy-ram-kbytes or --buy-ram-bytes should have non-zero value" );
                GSTC_ASSERT( !buy_ram_bytes_in_kbytes || !buy_ram_bytes, "ERROR: --buy-ram-kbytes and --buy-ram-bytes cannot be set at the same time" );
-                action buymembytes =   !buy_ram_eos.empty() ? create_buymem(creator, account_name, to_asset(buy_ram_eos))
+                action buymembytes =   !buy_ram_gst.empty() ? create_buymem(creator, account_name, to_asset(buy_ram_gst))
                   : create_buymembytes(creator, account_name, (buy_ram_bytes_in_kbytes) ? (buy_ram_bytes_in_kbytes * 1024) : buy_ram_bytes);
                auto net = to_asset(stake_net);
                auto cpu = to_asset(stake_cpu);

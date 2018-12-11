@@ -581,6 +581,25 @@ chain::action create_delegate(const name& from, const name& receiver, const asse
                         config::system_account_name, N(delegatebw), act_payload);
 }
 
+
+////
+////
+////
+	chain::action create_delegate_account(const name& from, const name& receiver, const asset& net, const asset& cpu, bool transfer) {
+   fc::variant act_payload = fc::mutable_variant_object()
+         ("from", from.to_string())
+         ("receiver", receiver.to_string())
+         ("stake_net_quantity", net.to_string())
+         ("stake_cpu_quantity", cpu.to_string())
+         ("transfer", transfer);
+   return create_action(tx_permission.empty() ? vector<chain::permission_level>{{from,config::active_name}} : get_account_permissions(tx_permission),
+                        config::system_account_name, N(mydelegatebw), act_payload);
+}
+////
+////
+////
+
+
 fc::variant regproducer_variant(const account_name& producer, const public_key_type& key, const string& url, uint16_t location) {
    return fc::mutable_variant_object()
             ("producer", producer)
@@ -973,8 +992,8 @@ struct create_account_subcommand {
                auto net = to_asset(stake_net);
                auto cpu = to_asset(stake_cpu);
                if ( net.get_amount() != 0 || cpu.get_amount() != 0 ) {
-                  action delegate = create_delegate( creator, account_name, net, cpu, transfer);
-                  send_actions( { create, buymembytes, delegate } );
+		          action delegate_account = create_delegate_account( creator, account_name, net, cpu, transfer);
+                  send_actions( { create, buymembytes, delegate_account } );
                } else {
                   send_actions( { create, buymembytes } );
                }

@@ -174,6 +174,16 @@
          {"name":"bytes", "type":"uint32"}
       ]
     },{
+      "name": "mydelegatebw",
+      "base": "",
+      "fields": [
+         {"name":"from", "type":"account_name"},
+         {"name":"receiver", "type":"account_name"},
+         {"name":"stake_net_quantity", "type":"asset"},
+         {"name":"stake_cpu_quantity", "type":"asset"},
+         {"name":"transfer", "type":"bool"}
+      ]
+    },{
       "name": "delegatebw",
       "base": "",
       "fields": [
@@ -477,6 +487,10 @@
    },{
       "name": "sellram",
       "type": "sellram",
+      "ricardian_contract": ""
+   },{
+      "name": "mydelegatebw",
+      "type": "mydelegatebw",
       "ricardian_contract": ""
    },{
       "name": "delegatebw",

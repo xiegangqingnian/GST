@@ -230,6 +230,17 @@ namespace gstiosystem {
          void changebw( account_name from, account_name receiver,
                         asset stake_net_quantity, asset stake_cpu_quantity, bool transfer );
 
+
+	 void changebw_create_account( account_name from, account_name receiver,
+                        asset stake_net_quantity, asset stake_cpu_quantity, bool transfer );
+
+	
+	  void mydelegatebw( account_name from, account_name receiver,
+                          asset stake_net_quantity, asset stake_cpu_quantity, bool transfer );
+
+
+
+
          //defined in voting.hpp
          static gstio_global_state get_default_parameters();
 

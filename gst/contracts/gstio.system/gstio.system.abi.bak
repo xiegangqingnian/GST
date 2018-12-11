@@ -158,6 +158,22 @@
          {"name":"quant", "type":"asset"}
       ]
     },{
+       "name": "buymem",
+      "base": "",
+      "fields": [
+         {"name":"payer", "type":"account_name"},
+         {"name":"receiver", "type":"account_name"},
+         {"name":"quant", "type":"asset"} 
+	 ]
+    },{
+      "name": "buymembytes",
+      "base": "",
+      "fields": [
+         {"name":"payer", "type":"account_name"},
+         {"name":"receiver", "type":"account_name"},
+         {"name":"bytes", "type":"uint32"}
+      ]
+    },{
       "name": "delegatebw",
       "base": "",
       "fields": [
@@ -449,6 +465,14 @@
    },{
       "name": "buyram",
       "type": "buyram",
+      "ricardian_contract": ""
+   },{
+      "name": "buymem",
+      "type": "buymem",
+      "ricardian_contract": ""
+   },{
+      "name": "buymembytes",
+      "type": "buymembytes",
       "ricardian_contract": ""
    },{
       "name": "sellram",
