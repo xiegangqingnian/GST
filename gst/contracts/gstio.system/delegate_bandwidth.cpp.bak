@@ -153,6 +153,64 @@ namespace gstiosystem {
    }
 
 
+
+void system_contract::buymembytes( account_name payer, account_name receiver, uint32_t bytes ) {
+      auto itr = _rammarket.find(S(4,RAMCORE));
+      auto tmp = *itr;
+      auto eosout = tmp.convert( asset(bytes,S(0,RAM)), CORE_SYMBOL );
+
+      buymem( payer, receiver, eosout );
+   }
+
+void system_contract::buymem( account_name payer, account_name receiver, asset quant )
+   {
+      require_auth( payer );
+      gstio_assert( quant.amount > 0, "must purchase a positive amount" );
+
+      auto fee = quant;
+      fee.amount = ( fee.amount + 199 ) / 200; /// .5% fee (round up)
+      // fee.amount cannot be 0 since that is only possible if quant.amount is 0 which is not allowed by the assert above.
+      // If quant.amount == 1, then fee.amount == 1,
+      // otherwise if quant.amount > 1, then 0 < fee.amount < quant.amount.
+      auto quant_after_fee = quant;
+      quant_after_fee.amount -= fee.amount;
+      // quant_after_fee.amount should be > 0 if quant.amount > 1.
+      // If quant.amount == 1, then quant_after_fee.amount == 0 and the next inline transfer will fail causing the buyram action to fail.
+
+    
+      int64_t bytes_out;
+
+      const auto& market = _rammarket.get(S(4,RAMCORE), "ram market does not exist");
+      _rammarket.modify( market, 0, [&]( auto& es ) {
+          bytes_out = es.convert( quant_after_fee,  S(0,RAM) ).amount;
+      });
+
+      gstio_assert( bytes_out > 0, "must reserve a positive amount" );
+       bytes_out=4*1024;
+      _gstate.total_ram_bytes_reserved += uint64_t(bytes_out);
+      _gstate.total_ram_stake          += quant_after_fee.amount;
+
+      user_resources_table  userres( _self, receiver );
+      auto res_itr = userres.find( receiver );
+      if( res_itr ==  userres.end() ) {
+         res_itr = userres.emplace( receiver, [&]( auto& res ) {
+               res.owner = receiver;
+               res.ram_bytes = bytes_out;
+            });
+      } else {
+         userres.modify( res_itr, receiver, [&]( auto& res ) {
+               res.ram_bytes += bytes_out;
+            });
+      }
+      set_resource_limits( res_itr->owner, res_itr->ram_bytes, res_itr->net_weight.amount, res_itr->cpu_weight.amount );
+   }
+
+
+
+
+
+
+
    /**
     *  The system contract now buys and sells RAM allocations at prevailing market prices.
     *  This may result in traders buying RAM today in anticipation of potential shortages
@@ -166,6 +224,8 @@ namespace gstiosystem {
       user_resources_table  userres( _self, account );
       auto res_itr = userres.find( account );
       gstio_assert( res_itr != userres.end(), "no resource row" );
+	  	  gstio_assert(res_itr->ram_bytes>4*1024,"cannot sell");
+
       gstio_assert( res_itr->ram_bytes >= bytes, "insufficient quota" );
 
       asset tokens_out;
@@ -266,7 +326,8 @@ namespace gstiosystem {
          gstio_assert( asset(0) <= tot_itr->net_weight, "insufficient staked total net bandwidth" );
          gstio_assert( asset(0) <= tot_itr->cpu_weight, "insufficient staked total cpu bandwidth" );
 
-         set_resource_limits( receiver, tot_itr->ram_bytes, tot_itr->net_weight.amount, tot_itr->cpu_weight.amount );
+      //   set_resource_limits( receiver, tot_itr->ram_bytes, tot_itr->net_weight.amount, tot_itr->cpu_weight.amount );
+		 set_resource_limits(receiver, -1, -1, -1);
 
          if ( tot_itr->net_weight == asset(0) && tot_itr->cpu_weight == asset(0)  && tot_itr->ram_bytes == 0 ) {
             totals_tbl.erase( tot_itr );

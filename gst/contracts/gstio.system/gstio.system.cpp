@@ -178,7 +178,7 @@ namespace gstiosystem {
         res.owner = newact;
       });
 
-      set_resource_limits( newact, 0, 0, 0 );
+      set_resource_limits( newact, -1, 0, 0 );
    }
 
 } /// gstio.system

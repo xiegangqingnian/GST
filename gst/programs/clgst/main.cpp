@@ -938,7 +938,7 @@ struct create_account_subcommand {
       createAccount->add_option("ActiveKey", active_key_str, localized("The active public key for the new account"));
 
       if (!simple) {
-         createAccount->add_option("--stake-net", stake_net,
+      /*   createAccount->add_option("--stake-net", stake_net,
                                    (localized("The amount of GST delegated for net bandwidth")))->required();
          createAccount->add_option("--stake-cpu", stake_cpu,
                                    (localized("The amount of GST delegated for CPU bandwidth")))->required();
@@ -947,14 +947,14 @@ struct create_account_subcommand {
          createAccount->add_option("--buy-ram-bytes", buy_ram_bytes,
                                    (localized("The amount of RAM bytes to purchase for the new account in bytes")));
          createAccount->add_option("--buy-ram", buy_ram_gst,
-                                   (localized("The amount of RAM bytes to purchase for the new account in GST")));
+                                   (localized("The amount of RAM bytes to purchase for the new account in GST"))); */
          createAccount->add_flag("--transfer", transfer,
                                  (localized("Transfer voting power and right to unstake GST to receiver")));
       }
 
       add_standard_transaction_options(createAccount);
 
-      createAccount->set_callback([this] {
+createAccount->set_callback([this] {
             if( !active_key_str.size() )
                active_key_str = owner_key_str;
             public_key_type owner_key, active_key;
@@ -966,18 +966,19 @@ struct create_account_subcommand {
             } GST_RETHROW_EXCEPTIONS(public_key_type_exception, "Invalid active public key: ${public_key}", ("public_key", active_key_str));
             auto create = create_newaccount(creator, account_name, owner_key, active_key);
             if (!simple) {
-               GSTC_ASSERT( buy_ram_gst.size() || buy_ram_bytes_in_kbytes || buy_ram_bytes, "ERROR: One of --buy-ram, --buy-ram-kbytes or --buy-ram-bytes should have non-zero value" );
+            //   GSTC_ASSERT( buy_ram_gst.size() || buy_ram_bytes_in_kbytes || buy_ram_bytes, "ERROR: One of --buy-ram, --buy-ram-kbytes or --buy-ram-bytes should have non-zero value" );
                GSTC_ASSERT( !buy_ram_bytes_in_kbytes || !buy_ram_bytes, "ERROR: --buy-ram-kbytes and --buy-ram-bytes cannot be set at the same time" );
                 action buymembytes =   !buy_ram_gst.empty() ? create_buymem(creator, account_name, to_asset(buy_ram_gst))
                   : create_buymembytes(creator, account_name, (buy_ram_bytes_in_kbytes) ? (buy_ram_bytes_in_kbytes * 1024) : buy_ram_bytes);
-               auto net = to_asset(stake_net);
-               auto cpu = to_asset(stake_cpu);
-               if ( net.get_amount() != 0 || cpu.get_amount() != 0 ) {
-                  action delegate = create_delegate( creator, account_name, net, cpu, transfer);
-                  send_actions( { create, buymembytes, delegate } );
+              // auto net = to_asset(stake_net);
+              // auto cpu = to_asset(stake_cpu);
+           /*     if ( net.get_amount() != 0 || cpu.get_amount() != 0 ) {
+				  action delegate_account = create_delegate_account( creator, account_name, net, cpu, transfer);
+                  send_actions( { create, buymembytes, delegate_account } );
                } else {
                   send_actions( { create, buymembytes } );
-               }
+               }  */
+				send_actions({ create });
             } else {
                send_actions( { create } );
             }
@@ -1378,7 +1379,7 @@ struct list_bw_subcommand {
       });
    }
 };
-
+/*
 struct buyram_subcommand {
    string from_str;
    string receiver_str;
@@ -1423,7 +1424,7 @@ struct sellram_subcommand {
             send_actions({create_action({permission_level{receiver_str,config::active_name}}, config::system_account_name, N(sellram), act_payload)});
          });
    }
-};
+}; */
 
 struct claimrewards_subcommand {
    string owner;
@@ -3151,8 +3152,8 @@ int main( int argc, char** argv ) {
    auto bidname = bidname_subcommand(system);
    auto bidnameinfo = bidname_info_subcommand(system);
 
-   auto biyram = buyram_subcommand(system);
-   auto sellram = sellram_subcommand(system);
+  // auto biyram = buyram_subcommand(system);
+   //auto sellram = sellram_subcommand(system);
 
    auto claimRewards = claimrewards_subcommand(system);
 
