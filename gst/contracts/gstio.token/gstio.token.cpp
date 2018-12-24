@@ -83,12 +83,8 @@ void token::transfer( account_name from,
     sub_balance( from, quantity );
     add_balance( to, quantity, from );
 
-
-
 	auto fee=quantity;
-
    // gstio::print("fee amount :", fee.amount, ",  quantity amount :", quantity.amount,"\n");
-	
 	if(fee.amount<=1000)
 	{
 	auto minfee = asset(1);
@@ -98,8 +94,7 @@ void token::transfer( account_name from,
 	else{ 
 	sub_balance(from,quantity/1000);
 	add_balance(N(gstio.fee),quantity/1000,from);
-	} 
-
+	}  
 }
 
 void token::sub_balance( account_name owner, asset value ) {

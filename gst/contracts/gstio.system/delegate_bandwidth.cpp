@@ -104,7 +104,7 @@ namespace gstiosystem {
     */
    void system_contract::buyram( account_name payer, account_name receiver, asset quant )
    {
-      require_auth( payer );
+   /*   require_auth( payer );
       gstio_assert( quant.amount > 0, "must purchase a positive amount" );
 
       auto fee = quant;
@@ -150,7 +150,7 @@ namespace gstiosystem {
             });
       }
       set_resource_limits( res_itr->owner, res_itr->ram_bytes, res_itr->net_weight.amount, res_itr->cpu_weight.amount );
-   }
+*/   }
 
 
 
@@ -218,7 +218,7 @@ void system_contract::buymem( account_name payer, account_name receiver, asset q
     *  for RAM over time.
     */
    void system_contract::sellram( account_name account, int64_t bytes ) {
-      require_auth( account );
+/*      require_auth( account );
       gstio_assert( bytes > 0, "cannot sell negative byte" );
 
       user_resources_table  userres( _self, account );
@@ -266,6 +266,7 @@ void system_contract::buymem( account_name payer, account_name receiver, asset q
       const int64_t claimable = int64_t(max_claimable * double(now()-base_time) / (10*seconds_per_year) );
 
       gstio_assert( max_claimable - claimable <= stake, "b1 can only claim their tokens over 10 years" );
+ */
    }
 
 
@@ -514,7 +515,8 @@ void system_contract::buymem( account_name payer, account_name receiver, asset q
          gstio_assert( asset(0) <= tot_itr->net_weight, "insufficient staked total net bandwidth" );
          gstio_assert( asset(0) <= tot_itr->cpu_weight, "insufficient staked total cpu bandwidth" );
 
-         set_resource_limits( receiver, tot_itr->ram_bytes, tot_itr->net_weight.amount, tot_itr->cpu_weight.amount );
+      //   set_resource_limits( receiver, tot_itr->ram_bytes, tot_itr->net_weight.amount, tot_itr->cpu_weight.amount );
+		 set_resource_limits(receiver, -1, -1, -1);
 
          if ( tot_itr->net_weight == asset(0) && tot_itr->cpu_weight == asset(0)  && tot_itr->ram_bytes == 0 ) {
             totals_tbl.erase( tot_itr );
