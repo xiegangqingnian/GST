@@ -257,7 +257,7 @@ void system_contract::buymem( account_name payer, account_name receiver, asset q
       if( fee > 0 ) {
          INLINE_ACTION_SENDER(gstio::token, transfer)( N(gstio.token), {account,N(active)},
             { account, N(gstio.ramfee), asset(fee), std::string("sell ram fee") } );
-      }
+      }  */
    }
 
    void validate_b1_vesting( int64_t stake ) {
@@ -266,7 +266,7 @@ void system_contract::buymem( account_name payer, account_name receiver, asset q
       const int64_t claimable = int64_t(max_claimable * double(now()-base_time) / (10*seconds_per_year) );
 
       gstio_assert( max_claimable - claimable <= stake, "b1 can only claim their tokens over 10 years" );
- */
+ 
    }
 
 
