@@ -649,25 +649,25 @@ void system_contract::buymem( account_name payer, account_name receiver, asset q
                                      asset stake_net_quantity,
                                      asset stake_cpu_quantity, bool transfer )
    {
-    /*  gstio_assert( stake_cpu_quantity >= asset(0), "must stake a positive amount" );
+      gstio_assert( stake_cpu_quantity >= asset(0), "must stake a positive amount" );
       gstio_assert( stake_net_quantity >= asset(0), "must stake a positive amount" );
       gstio_assert( stake_net_quantity + stake_cpu_quantity > asset(0), "must stake a positive amount" );
       gstio_assert( !transfer || from != receiver, "cannot use transfer flag if delegating to self" );
 
       changebw( from, receiver, stake_net_quantity, stake_cpu_quantity, transfer);
-   */} // delegatebw
+   } // delegatebw
 
    void system_contract::undelegatebw( account_name from, account_name receiver,
                                        asset unstake_net_quantity, asset unstake_cpu_quantity )
    {
-     /* gstio_assert( asset() <= unstake_cpu_quantity, "must unstake a positive amount" );
+      gstio_assert( asset() <= unstake_cpu_quantity, "must unstake a positive amount" );
       gstio_assert( asset() <= unstake_net_quantity, "must unstake a positive amount" );
       gstio_assert( asset() < unstake_cpu_quantity + unstake_net_quantity, "must unstake a positive amount" );
       gstio_assert( _gstate.total_activated_stake >= min_activated_stake,
                     "cannot undelegate bandwidth until the chain is activated (at least 15% of all tokens participate in voting)" );
 
       changebw( from, receiver, -unstake_net_quantity, -unstake_cpu_quantity, false);
-   */} // undelegatebw
+   } // undelegatebw
 
 
    void system_contract::refund( const account_name owner ) {
