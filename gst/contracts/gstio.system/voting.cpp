@@ -76,9 +76,11 @@ namespace gstiosystem {
       auto idx = _producers.get_index<N(prototalvote)>();
 
       std::vector< std::pair<gstio::producer_key,uint16_t> > top_producers;
-      top_producers.reserve(21);
 
-      for ( auto it = idx.cbegin(); it != idx.cend() && top_producers.size() < 21 && 0 < it->total_votes && it->active(); ++it ) {
+	  int producer_cnt = 3;
+      top_producers.reserve(producer_cnt);
+
+      for ( auto it = idx.cbegin(); it != idx.cend() && top_producers.size() < producer_cnt && 0 < it->total_votes && it->active(); ++it ) {
          top_producers.emplace_back( std::pair<gstio::producer_key,uint16_t>({{it->owner, it->producer_key}, it->location}) );
       }
 
