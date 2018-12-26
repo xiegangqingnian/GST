@@ -1,25 +1,25 @@
 #!/bin/bash
-cd /work/gst_install/monitor/EOS-Network-monitor/netmon-frontend
 echo "正在停止浏览器前端服务..."
-pkill node$
+pkill ng$
 sleep 0.5
-cd /work/gst_install/monitor/EOS-Network-monitor/netmon-backend
 echo "正在停止浏览器后台服务..."
-pm2 kill
-sleep 3s
-npm install
+systemctl stop nginx
+sleep 1s
+
+rm -f /work/wwwlogs/*
+rm -f /work/gst_install/tracker/trackerapi/var/logs/*
+rm -f /work/gst_install/tracker/trackerapi/var/cache/dev/*
+rm -f /work/gst_install/tracker/trackerapi/var/cache/prod/*
+
 echo "正在启动浏览器后台服务..."
-pm2 start ecosystem.config.js
+systemctl start nginx
 
 echo "正在启动浏览器前端服务..."
-cd /work/gst_install/monitor/EOS-Network-monitor/netmon-frontend
-n stable
-yarn
-yarn build
-nohup yarn start >/dev/null 2>&1 &
+cd /work/gst_install/tracker/frontend
+nohup ng serve --host 0.0.0.0 --port 4200 >/dev/null 2>&1 &
+sleep 3s
 
-
-sleep 2s
+systemctl status nginx
+ps -al
 
 netstat -lntp
-

@@ -1,75 +1,100 @@
 #!/bin/bash
-echo "正在停止浏览器服务..."
-pkill node$
-cd /work/monitor-work/EOS-Network-monitor/netmon-backend
-pm2 kill
+echo -e "\033[35m 正在停止浏览器前端服务...\033[0m"
+pkill ng$
 sleep 0.5
-echo "正在停止区块nodeos服务..."
-pkill nodeos
+
+echo -e "\033[35m 正在停止浏览器后台服务...\033[0m"
+systemctl stop nginx
+
+sleep 1s
+rm -f /work/wwwlogs/*
+rm -f /work/gst_install/tracker/trackerapi/var/logs/*
+rm -rf /work/gst_install/tracker/trackerapi/var/cache/dev/*
+rm -rf /work/gst_install/tracker/trackerapi/var/cache/prod/*
+rm -f /work/gst_install/nodgst/data/bpnode.log
+echo "正在停止区块nodgst服务..."
+pkill nodgst
 sleep 0.5
-echo "正在停止钱包keosd服务..."
-pkill keosd
-sleep 3s
-
-cd /work/eos_install
-nohup /work/eos_install/eos/build/bin/nodeos --data-dir=/work/eos_install/nodeos/data \
---config-dir=/work/eos_install/nodeos/config --max-transaction-time=1000 > /work/eos_install/nodeos/data/bpnode.log 2>&1 &
-
-#nohup /work/eos_install/eos/build/bin/keosd --data-dir=/work/eos_install/wallet \
-#--config-dir=/work/eos_install/wallet > /work/eos_install/wallet/wallet.log 2>&1 &
-
-alias cleos='cleos -u http://127.0.0.1:8888 --wallet-url http://127.0.0.1:8900'
-
-echo "nodeos service restart..."
+echo "正在停止钱包kgstd服务..."
+pkill kgstd
 sleep 2s
 
-echo "PW5Jbrw443s1toFjCxVP9EuiL7nSDHGX2Hm26LoKQu4U4oTxiyqoB" | cleos wallet unlock
+chown -R mongod:mongod /work/gst_install/mongo
+chmod -R 777 /work/gst_install/mongo
 
-cleos wallet list
+ret=$(ps -ef |grep mongod|grep -v grep|wc -l)
+if [ $ret -lt 2 ];then
+   echo -e "\033[32m the mongod service is ERR \033[0m"
+   systemctl start mongod
+fi
+sleep 2s
+
+cd /work/gst_install
+nohup /work/gst_install/gst/build/bin/nodgst --data-dir=/work/gst_install/nodgst/data \
+--config-dir=/work/gst_install/nodgst/config --max-transaction-time=3000 > /work/gst_install/nodgst/data/bpnode.log 2>&1 &
+
+nohup /work/gst_install/gst/build/bin/kgstd --data-dir=/work/gst_install/wallet \
+--config-dir=/work/gst_install/wallet > /work/gst_install/wallet/wallet.log 2>&1 &
+
+alias clgst='clgst -u http://127.0.0.1:8888 --wallet-url http://127.0.0.1:8900'
+
+echo "nodgst service restart..."
+
+echo "PW5Ka7m2J2wLAhA3wbJPQ9XhFMc5KVLVE2qYTETr6cEvwqyrTGJAw" | clgst wallet unlock
+
+clgst wallet list
 
 echo "钱包中的私钥列表..."
-echo "PW5Jbrw443s1toFjCxVP9EuiL7nSDHGX2Hm26LoKQu4U4oTxiyqoB" | cleos wallet private_keys
+echo "PW5Ka7m2J2wLAhA3wbJPQ9XhFMc5KVLVE2qYTETr6cEvwqyrTGJAw" | clgst wallet private_keys
 
-echo "公钥PW5Jbrw44* 对应的帐户列表..."
-cleos get accounts EOS4zx1a8BcodmZQ5jW4Csj3ussy1tj9AxwhDp2Tx3GoSqkzQfgkA
+STALE_NOD=$(netstat -ln|grep -o 8888)
+if [ "$STALE_NOD" == "" ]; then
+      cat /work/gst_install/nodgst/data/bpnode.log | grep -B 1 ^error
 
-echo "eosio account info:"
-cleos get account eosio
+      nohup /work/gst_install/gst/build/bin/nodgst --data-dir=/work/gst_install/nodgst/data \
+	--config-dir=/work/gst_install/nodgst/config --max-transaction-time=3000 > /work/gst_install/nodgst/data/bpnode.log 2>&1 &
+	sleep 2s
+fi
 
-echo "account eosio currency balance:"
-cleos get currency balance eosio.token eosio EOS
+echo "公钥 GST8MfTEt* 对应的帐户列表..."
+clgst get accounts GST8MfTEtHsMU1AGL4LYbYx3eiU9iVK3K6WXUEoJHkieVAbj9gHDz
 
-echo "EOS currency stats:"
-cleos get currency stats eosio.token EOS
+echo "gstio account info:"
+clgst get account gstio
+
+echo "account gstio currency balance:"
+clgst get currency balance gstio.token gstio GST
+
+echo "GST currency stats:"
+clgst get currency stats gstio.token GST
 
 echo "account bp1 info:"
-cleos get account bp1
+clgst get account bp1
 sleep 1s
 
 echo "account voter1 info:"
-cleos get account voter2
+clgst get account voter2
 sleep 1s
 
 echo "account bp1 info:"
-cleos get account bp1
+clgst get account bp1
 sleep 1s
 
 echo "当前区块信息..."
-cleos get info
+clgst get info
 
- 
-cd /work/monitor-work/EOS-Network-monitor/netmon-backend
-#npm install
+sleep 1s
+
 echo "正在启动浏览器后台服务..."
-pm2 start ecosystem.config.js
+systemctl start nginx
 
 echo "正在启动浏览器前端服务..."
-cd /work/monitor-work/EOS-Network-monitor/netmon-frontend
-#yarn prebuild
-#yarn build
-nohup yarn start >/dev/null 2>&1 &
+cd /work/gst_install/tracker/frontend
+nohup ng serve --host 0.0.0.0 --port 4200 >/dev/null 2>&1 &
+sleep 3s
 
-cd /work/eos_install
+systemctl status nginx
+ps -al
 
 netstat -lntp
 
