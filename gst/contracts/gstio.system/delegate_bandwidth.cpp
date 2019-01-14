@@ -15,677 +15,385 @@
 #include <gstio.token/gstio.token.hpp>
 
 
-#include <cmath>
+#include<math.h>
 #include <map>
 
 namespace gstiosystem {
-   using gstio::asset;
-   using gstio::indexed_by;
-   using gstio::const_mem_fun;
-   using gstio::bytes;
-   using gstio::print;
-   using gstio::permission_level;
-   using std::map;
-   using std::pair;
-
-   static constexpr time refund_delay = 3*24*3600;
-   static constexpr time refund_expiration_time = 3600;
-
-   struct user_resources {
-      account_name  owner;
-      asset         net_weight;
-      asset         cpu_weight;
-      int64_t       ram_bytes = 0;
-
-      uint64_t primary_key()const { return owner; }
-
-      // explicit serialization macro is not necessary, used here only to improve compilation time
-      GSTLIB_SERIALIZE( user_resources, (owner)(net_weight)(cpu_weight)(ram_bytes) )
-   };
-
-
-   /**
-    *  Every user 'from' has a scope/table that uses every receipient 'to' as the primary key.
-    */
-   struct delegated_bandwidth {
-      account_name  from;
-      account_name  to;
-      asset         net_weight;
-      asset         cpu_weight;
-
-      uint64_t  primary_key()const { return to; }
-
-      // explicit serialization macro is not necessary, used here only to improve compilation time
-      GSTLIB_SERIALIZE( delegated_bandwidth, (from)(to)(net_weight)(cpu_weight) )
-
-   };
-
-   struct refund_request {
-      account_name  owner;
-      time          request_time;
-      gstio::asset  net_amount;
-      gstio::asset  cpu_amount;
-
-      uint64_t  primary_key()const { return owner; }
-
-      // explicit serialization macro is not necessary, used here only to improve compilation time
-      GSTLIB_SERIALIZE( refund_request, (owner)(request_time)(net_amount)(cpu_amount) )
-   };
-
-   /**
-    *  These tables are designed to be constructed in the scope of the relevant user, this
-    *  facilitates simpler API for per-user queries
-    */
-   typedef gstio::multi_index< N(userres), user_resources>      user_resources_table;
-   typedef gstio::multi_index< N(delband), delegated_bandwidth> del_bandwidth_table;
-   typedef gstio::multi_index< N(refunds), refund_request>      refunds_table;
-
-
-
-   /**
-    *  This action will buy an exact amount of ram and bill the payer the current market price.
-    */
-   void system_contract::buyrambytes( account_name payer, account_name receiver, uint32_t bytes ) {
-      auto itr = _rammarket.find(S(4,RAMCORE));
-      auto tmp = *itr;
-      auto gstout = tmp.convert( asset(bytes,S(0,RAM)), CORE_SYMBOL );
-
-      buyram( payer, receiver, gstout );
-   }
-
-
-   /**
-    *  When buying ram the payer irreversiblly transfers quant to system contract and only
-    *  the receiver may reclaim the tokens via the sellram action. The receiver pays for the
-    *  storage of all database records associated with this action.
-    *
-    *  RAM is a scarce resource whose supply is defined by global properties max_ram_size. RAM is
-    *  priced using the bancor algorithm such that price-per-byte with a constant reserve ratio of 100:1.
-    */
-   void system_contract::buyram( account_name payer, account_name receiver, asset quant )
-   {
-   /*   require_auth( payer );
-      gstio_assert( quant.amount > 0, "must purchase a positive amount" );
-
-      auto fee = quant;
-      fee.amount = ( fee.amount + 199 ) / 200; /// .5% fee (round up)
-      // fee.amount cannot be 0 since that is only possible if quant.amount is 0 which is not allowed by the assert above.
-      // If quant.amount == 1, then fee.amount == 1,
-      // otherwise if quant.amount > 1, then 0 < fee.amount < quant.amount.
-      auto quant_after_fee = quant;
-      quant_after_fee.amount -= fee.amount;
-      // quant_after_fee.amount should be > 0 if quant.amount > 1.
-      // If quant.amount == 1, then quant_after_fee.amount == 0 and the next inline transfer will fail causing the buyram action to fail.
-
-      INLINE_ACTION_SENDER(gstio::token, transfer)( N(gstio.token), {payer,N(active)},
-         { payer, N(gstio.ram), quant_after_fee, std::string("buy ram") } );
-
-      if( fee.amount > 0 ) {
-         INLINE_ACTION_SENDER(gstio::token, transfer)( N(gstio.token), {payer,N(active)},
-                                                       { payer, N(gstio.ramfee), fee, std::string("ram fee") } );
-      }
-
-      int64_t bytes_out;
-
-      const auto& market = _rammarket.get(S(4,RAMCORE), "ram market does not exist");
-      _rammarket.modify( market, 0, [&]( auto& es ) {
-          bytes_out = es.convert( quant_after_fee,  S(0,RAM) ).amount;
-      });
-
-      gstio_assert( bytes_out > 0, "must reserve a positive amount" );
-
-      _gstate.total_ram_bytes_reserved += uint64_t(bytes_out);
-      _gstate.total_ram_stake          += quant_after_fee.amount;
-
-      user_resources_table  userres( _self, receiver );
-      auto res_itr = userres.find( receiver );
-      if( res_itr ==  userres.end() ) {
-         res_itr = userres.emplace( receiver, [&]( auto& res ) {
-               res.owner = receiver;
-               res.ram_bytes = bytes_out;
-            });
-      } else {
-         userres.modify( res_itr, receiver, [&]( auto& res ) {
-               res.ram_bytes += bytes_out;
-            });
-      }
-      set_resource_limits( res_itr->owner, res_itr->ram_bytes, res_itr->net_weight.amount, res_itr->cpu_weight.amount );
-*/   }
-
-
-
-void system_contract::buymembytes( account_name payer, account_name receiver, uint32_t bytes ) {
-      auto itr = _rammarket.find(S(4,RAMCORE));
-      auto tmp = *itr;
-      auto eosout = tmp.convert( asset(bytes,S(0,RAM)), CORE_SYMBOL );
-
-      buymem( payer, receiver, eosout );
-   }
-
-void system_contract::buymem( account_name payer, account_name receiver, asset quant )
-   {
-      require_auth( payer );
-      gstio_assert( quant.amount > 0, "must purchase a positive amount" );
-
-      auto fee = quant;
-      fee.amount = ( fee.amount + 199 ) / 200; /// .5% fee (round up)
-      // fee.amount cannot be 0 since that is only possible if quant.amount is 0 which is not allowed by the assert above.
-      // If quant.amount == 1, then fee.amount == 1,
-      // otherwise if quant.amount > 1, then 0 < fee.amount < quant.amount.
-      auto quant_after_fee = quant;
-      quant_after_fee.amount -= fee.amount;
-      // quant_after_fee.amount should be > 0 if quant.amount > 1.
-      // If quant.amount == 1, then quant_after_fee.amount == 0 and the next inline transfer will fail causing the buyram action to fail.
-
-    
-      int64_t bytes_out;
+	using gstio::asset;
+	using gstio::indexed_by;
+	using gstio::const_mem_fun;
+	using gstio::bytes;
+	using gstio::print;
+	using gstio::permission_level;
+	using std::map;
+	using std::pair;
+
+	
+	static constexpr time refund_delay = 3*24*3600;
+	static constexpr time refund_expiration_time = 3600;
+	static constexpr time  reward_time = 24*3600;  
+
+	static int64_t  reward_vote = 2'000'000'0000.0;//利息计算方法 抵押*时间/reward_value
+	static int64_t reward_max = 100000000;//利息值放大倍数10的8次方  1gst 1天 0.0000'0432
+	static int64_t   value = 432;// *0.00000432*100000000
+
+
+	struct user_resources {
+		account_name  owner;
+		asset         net_weight;
+		asset         cpu_weight;
+		int64_t      ram_bytes = 0;
+		asset         reward;
+		time          del_time;//抵押时间
+		time          pay_time;//结算利息时间	
+
+		asset      staked;
+
+		uint64_t primary_key()const { return owner; }
+
+		// explicit serialization macro is not necessary, used here only to improve compilation time
+		GSTLIB_SERIALIZE(user_resources, (owner)(net_weight)(cpu_weight)(ram_bytes)(reward)(del_time)(pay_time)(staked))
+	};
+
+	/**
+	 *  Every user 'from' has a scope/table that uses every receipient 'to' as the primary key.
+	 */
+	struct delegated_bandwidth {
+
+		account_name  from;
+		account_name  to;
+		asset         net_weight;
+		asset         cpu_weight;
+
+		uint64_t  primary_key()const { return to; }
+
+		// explicit serialization macro is not necessary, used here only to improve compilation time
+		GSTLIB_SERIALIZE(delegated_bandwidth, (from)(to)(net_weight)(cpu_weight))
+
+	};
+
+	struct refund_request {
+		account_name  owner;
+		time          request_time;
+		gstio::asset  net_amount;
+		gstio::asset  cpu_amount;
+		gstio::asset  vote_pay;
+
+		uint64_t  primary_key()const { return owner; }
+
+		// explicit serialization macro is not necessary, used here only to improve compilation time
+		GSTLIB_SERIALIZE(refund_request, (owner)(request_time)(net_amount)(cpu_amount)(vote_pay))
+	};
+
+	/**
+	 *  These tables are designed to be constructed in the scope of the relevant user, this
+	 *  facilitates simpler API for per-user queries
+	 */
+	typedef gstio::multi_index< N(userres), user_resources>      user_resources_table;
+	typedef gstio::multi_index< N(delband), delegated_bandwidth> del_bandwidth_table;
+	typedef gstio::multi_index< N(refunds), refund_request>      refunds_table;
+
+	void validate_b1_vesting(int64_t stake) {
+		const int64_t base_time = 1527811200; /// 2018-06-01
+		const int64_t max_claimable = 100'000'000'0000ll;
+		const int64_t claimable = int64_t(max_claimable * double(now() - base_time) / (10 * seconds_per_year));
+		gstio_assert(max_claimable - claimable <= stake, "b1 can only claim their tokens over 10 years");
+	}
+
+
+	void system_contract::changebw(account_name from, account_name receiver,
+		const asset stake_net_delta, const asset stake_cpu_delta, bool transfer)
+	{
+		require_auth(from);
+		gstio_assert(stake_net_delta != asset(0) || stake_cpu_delta != asset(0), "should stake non-zero amount");
+		gstio_assert(std::abs((stake_net_delta + stake_cpu_delta).amount)
+			>= std::max(std::abs(stake_net_delta.amount), std::abs(stake_cpu_delta.amount)),
+			"net and cpu deltas cannot be opposite signs");
+		account_name source_stake_from = from;
+		if (transfer) {
+			from = receiver;
+		}
+
+		// update stake delegated from "from" to "receiver"更新抵押记录表
+		{
+			del_bandwidth_table     del_tbl(_self, from);
+			auto itr = del_tbl.find(receiver);
+			if (itr == del_tbl.end()) {
+				itr = del_tbl.emplace(from, [&](auto& dbo) {
+					dbo.from = from;
+					dbo.to = receiver;
+					dbo.net_weight = stake_net_delta;
+					dbo.cpu_weight = stake_cpu_delta;
+
+				});
+			}
+			else {
+				del_tbl.modify(itr, 0, [&](auto& dbo) {
+					dbo.net_weight += stake_net_delta;
+					dbo.cpu_weight += stake_cpu_delta;
+				});
+				//	   gstio::print("tot.reward7 :", tot.reward.amount, " tot.pay_time-tot.del_time:",tot.pay_time-tot.del_time,"\n");			
+			}
+			gstio_assert(asset(0) <= itr->net_weight, "insufficient staked net bandwidth");
+			gstio_assert(asset(0) <= itr->cpu_weight, "insufficient staked cpu bandwidth");
+			if (itr->net_weight == asset(0) && itr->cpu_weight == asset(0)) {
+				del_tbl.erase(itr);
+			}
+		} // itr can be invalid, should go out of scope
+  ////////
+		// update totals of "receiver"更新抵押总量表
+		{
+			user_resources_table   totals_tbl(_self, receiver);
+			auto tot_itr = totals_tbl.find(receiver);
+			if (tot_itr == totals_tbl.end()) {
+				tot_itr = totals_tbl.emplace(from, [&](auto& tot) {
+					//		gstio::print("tot.reward6 :", tot.staked.amount, " tot.pay_time-tot.del_time:",tot.pay_time-tot.del_time,"\n");			
+					tot.owner = receiver;
+					tot.net_weight = stake_net_delta;
+					tot.cpu_weight = stake_cpu_delta;
+					tot.del_time = now();
+					tot.staked = stake_net_delta + stake_cpu_delta;
+					//				  gstio::print("tot.reward5 :", tot.staked.amount, " tot.pay_time-tot.del_time:",tot.pay_time-tot.del_time,"\n");			
+				});
+			}
+			else {
+				totals_tbl.modify(tot_itr, from == receiver ? from : 0, [&](auto& tot) {
+					tot.pay_time = now();
+					//  gstio::print("tot.reward7 :", tot.staked.amount, " tot.pay_time-tot.del_time:",tot.pay_time-tot.del_time,"\n");			
+
+					//gstio::print("tot.reward4 :", tot.reward.amount, " tot.pay_time-tot.del_time:",tot.pay_time-tot.del_time,"\n");			
+					tot.net_weight += stake_net_delta;
+					tot.cpu_weight += stake_cpu_delta;
+					// gstio::print("tot.reward1 :", tot.reward.amount, " tot.pay_time-tot.del_time:",tot.pay_time-tot.del_time,"\n");													 
+
+					tot.reward += (tot.pay_time - tot.del_time) / reward_time * tot.staked * value;   //截止本次 抵押/撤回 操作时当前的利息值value * 
+					  //gstio::print("tot.reward7 :", tot.staked.amount, " tot.pay_time-tot.del_time:",tot.pay_time-tot.del_time,"\n");
+					gstio::print("tot.reward2 :", tot.reward.amount, " tot.pay_time-tot.del_time:", tot.pay_time - tot.del_time, "\n");
+
+
+					tot.del_time = tot.pay_time;
+					tot.staked += stake_net_delta + stake_cpu_delta;
+
+				});
+			}
+			gstio_assert(asset(0) <= tot_itr->net_weight, "insufficient staked total net bandwidth");
+			gstio_assert(asset(0) <= tot_itr->cpu_weight, "insufficient staked total cpu bandwidth");
+
+			//   set_resource_limits( receiver, tot_itr->ram_bytes, tot_itr->net_weight.amount, tot_itr->cpu_weight.amount );
+			set_resource_limits(receiver, -1, -1, -1);
+
+			if (tot_itr->net_weight == asset(0) && tot_itr->cpu_weight == asset(0) && tot_itr->ram_bytes == 0 && tot_itr->reward == asset(0)) {
+				totals_tbl.erase(tot_itr);
+			}
+		} // tot_itr can be invalid, should go out of scope
+
+		// create refund or update from existing refund 更新退款表
+		if (N(gstio.stake) != source_stake_from) { //for gstio both transfer and refund make no sense
+			refunds_table refunds_tbl(_self, from);
+			auto req = refunds_tbl.find(from);
+
+			//create/update/delete refund
+			auto net_balance = stake_net_delta;
+			auto cpu_balance = stake_cpu_delta;
+			bool need_deferred_trx = false;
+
+
+			// net and cpu are same sign by assertions in delegatebw and undelegatebw
+			// redundant assertion also at start of changebw to protect against misuse of changebw
+			bool is_undelegating = (net_balance.amount + cpu_balance.amount) < 0;
+			bool is_delegating_to_self = (!transfer && from == receiver);
+
+			if (is_delegating_to_self || is_undelegating) {
+				if (req != refunds_tbl.end()) { //need to update refund
+					refunds_tbl.modify(req, 0, [&](refund_request& r) {
+						if (net_balance < asset(0) || cpu_balance < asset(0)) {
+							r.request_time = now();
+						}
+						r.net_amount -= net_balance;
+						if (r.net_amount < asset(0)) {
+							net_balance = -r.net_amount;
+							r.net_amount = asset(0);
+						}
+						else {
+							net_balance = asset(0);
+						}
+						r.cpu_amount -= cpu_balance;
+						if (r.cpu_amount < asset(0)) {
+							cpu_balance = -r.cpu_amount;
+							r.cpu_amount = asset(0);
+						}
+						else {
+							cpu_balance = asset(0);
+						}
+					});
+
+					gstio_assert(asset(0) <= req->net_amount, "negative net refund amount"); //should never happen
+					gstio_assert(asset(0) <= req->cpu_amount, "negative cpu refund amount"); //should never happen
+
+					if (req->net_amount == asset(0) && req->cpu_amount == asset(0)) {
+						refunds_tbl.erase(req);
+						need_deferred_trx = false;
+					}
+					else {
+						need_deferred_trx = true;
+					}
+
+				}
+				else if (net_balance < asset(0) || cpu_balance < asset(0)) { //need to create refund
+					refunds_tbl.emplace(from, [&](refund_request& r) {
+						r.owner = from;
+						if (net_balance < asset(0)) {
+							r.net_amount = -net_balance;
+							net_balance = asset(0);
+						} // else r.net_amount = 0 by default constructor
+						if (cpu_balance < asset(0)) {
+							r.cpu_amount = -cpu_balance;
+							cpu_balance = asset(0);
+						} // else r.cpu_amount = 0 by default constructor
+						r.request_time = now();
+					});
+					need_deferred_trx = true;
+				} // else stake increase requested with no existing row in refunds_tbl -> nothing to do with refunds_tbl
+			} /// end if is_delegating_to_self || is_undelegating
+
+			if (need_deferred_trx) {
+				gstio::transaction out;
+				out.actions.emplace_back(permission_level{ from, N(active) }, _self, N(refund), from);
+				out.delay_sec = refund_delay;
+				cancel_deferred(from); // TODO: Remove this line when replacing deferred trxs is fixed
+				out.send(from, from, true);
+			}
+			else {
+				cancel_deferred(from);
+			}
+
+			auto transfer_amount = net_balance + cpu_balance;
+			if (asset(0) < transfer_amount) {
+				INLINE_ACTION_SENDER(gstio::token, transfer)(N(gstio.token), { source_stake_from, N(active) },
+					{ source_stake_from, N(gstio.stake), asset(transfer_amount), std::string("stake bandwidth") });
+			}
+		}
+
+		// update voting power
+		{
+			asset total_update = stake_net_delta + stake_cpu_delta;
+			auto from_voter = _voters.find(from);
+			if (from_voter == _voters.end()) {
+				from_voter = _voters.emplace(from, [&](auto& v) {
+					v.owner = from;
+					v.staked = total_update.amount;
+				});
+			}
+			else {
+				_voters.modify(from_voter, 0, [&](auto& v) {
+					v.staked += total_update.amount;
+				});
+			}
+			gstio_assert(0 <= from_voter->staked, "stake for voting cannot be negative");
+			if (from == N(b1)) {
+				validate_b1_vesting(from_voter->staked);
+			}
+
+			if (from_voter->producers.size() || from_voter->proxy) {
+				update_votes(from, from_voter->proxy, from_voter->producers, false);
+			}
+		}
+	}
+	/////
+
+
+
+
+
+	////
+	void system_contract::delegatebw(account_name from, account_name receiver,
+		asset stake_net_quantity,
+		asset stake_cpu_quantity, bool transfer)
+	{
+		gstio::print("stake_net_quantity :", stake_net_quantity.amount, ",  stake_cpu_quantity :", stake_cpu_quantity.amount, "\n");
+
+
+		gstio_assert(stake_cpu_quantity >= asset(0), "must stake a positive amount");
+		gstio_assert(stake_net_quantity >= asset(0), "must stake a positive amount");
+		gstio_assert(stake_net_quantity + stake_cpu_quantity > asset(0), "must stake a positive amount");
+		gstio_assert(!transfer || from != receiver, "cannot use transfer flag if delegating to self");
+
+		gstio::print("account_name :", from, ",  account_name :", receiver, "\n");
+
+
+		changebw(from, receiver, stake_net_quantity, stake_cpu_quantity, transfer);
+	} // delegatebw
+
+	void system_contract::undelegatebw(account_name from, account_name receiver,
+		asset unstake_net_quantity, asset unstake_cpu_quantity)
+	{
+		gstio_assert(asset() <= unstake_cpu_quantity, "must unstake a positive amount");
+		gstio_assert(asset() <= unstake_net_quantity, "must unstake a positive amount");
+		gstio_assert(asset() < unstake_cpu_quantity + unstake_net_quantity, "must unstake a positive amount");
+		gstio_assert(_gstate.total_activated_stake >= min_activated_stake,
+			"cannot undelegate bandwidth until the chain is activated (at least 15% of all tokens participate in voting)");
+
+		changebw(from, receiver, -unstake_net_quantity, -unstake_cpu_quantity, false);
+	} // undelegatebw
+
+
+	void system_contract::refund(const account_name owner) {
+		require_auth(owner);
+
+		refunds_table refunds_tbl(_self, owner);
+		auto req = refunds_tbl.find(owner);
+		gstio_assert(req != refunds_tbl.end(), "refund request not found");
+		gstio_assert(req->request_time + refund_delay <= now(), "refund is not available yet");
+
+		// Until now() becomes NOW, the fact that now() is the timestamp of the previous block could in theory
+		// allow people to get their tokens earlier than the 3 day delay if the unstake happened immediately after many
+		// consecutive missed blocks.
+
+		INLINE_ACTION_SENDER(gstio::token, transfer)(N(gstio.token), { N(gstio.stake),N(active) },
+			{ N(gstio.stake), req->owner, req->net_amount + req->cpu_amount, std::string("unstake") });
+
+
+		refunds_tbl.erase(req);
+	}
+
+
+	void system_contract::voterewards(const account_name& owner) {
+		require_auth(owner);
+
+		asset	  max_available_reward;// reward amount for transfer
+		asset   virtual_reward;//reward amount
+
+		user_resources_table   totals_tbl(_self, owner);
+		auto tot_itr = totals_tbl.find(owner);
+
+		totals_tbl.modify(tot_itr, 0, [&](auto& tot) {
+
+			gstio_assert(tot.reward.amount >= reward_max, "reward is not available yet");//利息值要大于0.0001  才可提取
+			gstio::print("tot......reward :", tot.reward.amount, "\n");
+
+			max_available_reward = tot.reward / reward_max;
+			virtual_reward = max_available_reward * reward_max;
+			gstio::print("max_available_reward.amount :", max_available_reward.amount, "\n");
+			tot.reward -= virtual_reward;
+
+
+			INLINE_ACTION_SENDER(gstio::token, transfer)(N(gstio.token), { N(gstio.vote),N(active) },
+				{ N(gstio.vote), tot_itr->owner, asset(max_available_reward), std::string("voter  reward") });
+		});
+	}
+
+
+	void system_contract::buyrambytes(account_name payer, account_name receiver, uint32_t bytes) {   }
+	void system_contract::buyram(account_name payer, account_name receiver, asset quant) { }
+	void system_contract::buymembytes(account_name payer, account_name receiver, uint32_t bytes) { }
+	void system_contract::buymem(account_name payer, account_name receiver, asset quant) {}
+	void system_contract::sellram(account_name account, int64_t bytes) { }
+	void system_contract::changebw_create_account(account_name from, account_name receiver,
+		const asset stake_net_delta, const asset stake_cpu_delta, bool transfer) {}
+	void system_contract::mydelegatebw(account_name from, account_name receiver, asset stake_net_quantity, asset stake_cpu_quantity, bool transfer) {}
 
-      const auto& market = _rammarket.get(S(4,RAMCORE), "ram market does not exist");
-      _rammarket.modify( market, 0, [&]( auto& es ) {
-          bytes_out = es.convert( quant_after_fee,  S(0,RAM) ).amount;
-      });
-
-      gstio_assert( bytes_out > 0, "must reserve a positive amount" );
-       bytes_out=4*1024;
-      _gstate.total_ram_bytes_reserved += uint64_t(bytes_out);
-      _gstate.total_ram_stake          += quant_after_fee.amount;
-
-      user_resources_table  userres( _self, receiver );
-      auto res_itr = userres.find( receiver );
-      if( res_itr ==  userres.end() ) {
-         res_itr = userres.emplace( receiver, [&]( auto& res ) {
-               res.owner = receiver;
-               res.ram_bytes = bytes_out;
-            });
-      } else {
-         userres.modify( res_itr, receiver, [&]( auto& res ) {
-               res.ram_bytes += bytes_out;
-            });
-      }
-      set_resource_limits( res_itr->owner, res_itr->ram_bytes, res_itr->net_weight.amount, res_itr->cpu_weight.amount );
-   }
-
-
-
-
-
-
-
-   /**
-    *  The system contract now buys and sells RAM allocations at prevailing market prices.
-    *  This may result in traders buying RAM today in anticipation of potential shortages
-    *  tomorrow. Overall this will result in the market balancing the supply and demand
-    *  for RAM over time.
-    */
-   void system_contract::sellram( account_name account, int64_t bytes ) {
-/*      require_auth( account );
-      gstio_assert( bytes > 0, "cannot sell negative byte" );
-
-      user_resources_table  userres( _self, account );
-      auto res_itr = userres.find( account );
-      gstio_assert( res_itr != userres.end(), "no resource row" );
-	  	  gstio_assert(res_itr->ram_bytes>4*1024,"cannot sell");
-
-      gstio_assert( res_itr->ram_bytes >= bytes, "insufficient quota" );
-
-      asset tokens_out;
-      auto itr = _rammarket.find(S(4,RAMCORE));
-      _rammarket.modify( itr, 0, [&]( auto& es ) {
-          /// the cast to int64_t of bytes is safe because we certify bytes is <= quota which is limited by prior purchases
-          tokens_out = es.convert( asset(bytes,S(0,RAM)), CORE_SYMBOL);
-      });
-
-      gstio_assert( tokens_out.amount > 1, "token amount received from selling ram is too low" );
-
-      _gstate.total_ram_bytes_reserved -= static_cast<decltype(_gstate.total_ram_bytes_reserved)>(bytes); // bytes > 0 is asserted above
-      _gstate.total_ram_stake          -= tokens_out.amount;
-
-      //// this shouldn't happen, but just in case it does we should prevent it
-      gstio_assert( _gstate.total_ram_stake >= 0, "error, attempt to unstake more tokens than previously staked" );
-
-      userres.modify( res_itr, account, [&]( auto& res ) {
-          res.ram_bytes -= bytes;
-      });
-      set_resource_limits( res_itr->owner, res_itr->ram_bytes, res_itr->net_weight.amount, res_itr->cpu_weight.amount );
-
-      INLINE_ACTION_SENDER(gstio::token, transfer)( N(gstio.token), {N(gstio.ram),N(active)},
-                                                       { N(gstio.ram), account, asset(tokens_out), std::string("sell ram") } );
-
-      auto fee = ( tokens_out.amount + 199 ) / 200; /// .5% fee (round up)
-      // since tokens_out.amount was asserted to be at least 2 earlier, fee.amount < tokens_out.amount
-      
-      if( fee > 0 ) {
-         INLINE_ACTION_SENDER(gstio::token, transfer)( N(gstio.token), {account,N(active)},
-            { account, N(gstio.ramfee), asset(fee), std::string("sell ram fee") } );
-      }  */
-   }
-
-   void validate_b1_vesting( int64_t stake ) {
-      const int64_t base_time = 1527811200; /// 2018-06-01
-      const int64_t max_claimable = 100'000'000'0000ll;
-      const int64_t claimable = int64_t(max_claimable * double(now()-base_time) / (10*seconds_per_year) );
-
-      gstio_assert( max_claimable - claimable <= stake, "b1 can only claim their tokens over 10 years" );
- 
-   }
-
-
-/////////////
-/////////////
-////////////
-
-
-//   changebw for create_account
-
-
-	void system_contract::changebw_create_account( account_name from, account_name receiver,
-                                   const asset stake_net_delta, const asset stake_cpu_delta, bool transfer )
-   {
-      require_auth( from );
-      gstio_assert( stake_net_delta != asset(0) || stake_cpu_delta != asset(0), "should stake non-zero amount" );
-      gstio_assert( std::abs( (stake_net_delta + stake_cpu_delta).amount )
-                     >= std::max( std::abs( stake_net_delta.amount ), std::abs( stake_cpu_delta.amount ) ),
-                    "net and cpu deltas cannot be opposite signs" );
-
-      account_name source_stake_from = from;
-      if ( transfer ) {
-         from = receiver;
-      }
-
-      // update stake delegated from "from" to "receiver"
-      {
-         del_bandwidth_table     del_tbl( _self, from);
-         auto itr = del_tbl.find( receiver );
-         if( itr == del_tbl.end() ) {
-            itr = del_tbl.emplace( from, [&]( auto& dbo ){
-                  dbo.from          = from;
-                  dbo.to            = receiver;
-                  dbo.net_weight    = stake_net_delta;
-                  dbo.cpu_weight    = stake_cpu_delta;
-               });
-         }
-         else {
-            del_tbl.modify( itr, 0, [&]( auto& dbo ){
-                  dbo.net_weight    += stake_net_delta;
-                  dbo.cpu_weight    += stake_cpu_delta;
-               });
-         }
-         gstio_assert( asset(0) <= itr->net_weight, "insufficient staked net bandwidth" );
-         gstio_assert( asset(0) <= itr->cpu_weight, "insufficient staked cpu bandwidth" );
-         if ( itr->net_weight == asset(0) && itr->cpu_weight == asset(0) ) {
-            del_tbl.erase( itr );
-         }
-      } // itr can be invalid, should go out of scope
-
-      // update totals of "receiver"
-      {
-         user_resources_table   totals_tbl( _self, receiver );
-         auto tot_itr = totals_tbl.find( receiver );
-         if( tot_itr ==  totals_tbl.end() ) {
-            tot_itr = totals_tbl.emplace( from, [&]( auto& tot ) {
-                  tot.owner = receiver;
-                  tot.net_weight    = stake_net_delta;
-                  tot.cpu_weight    = stake_cpu_delta;
-               });
-         } else {
-            totals_tbl.modify( tot_itr, from == receiver ? from : 0, [&]( auto& tot ) {
-                  tot.net_weight    += stake_net_delta;
-                  tot.cpu_weight    += stake_cpu_delta;
-               });
-         }
-         gstio_assert( asset(0) <= tot_itr->net_weight, "insufficient staked total net bandwidth" );
-         gstio_assert( asset(0) <= tot_itr->cpu_weight, "insufficient staked total cpu bandwidth" );
-
- //        set_resource_limits( receiver, tot_itr->ram_bytes, tot_itr->net_weight.amount, tot_itr->cpu_weight.amount );
-         set_resource_limits( receiver, -1,-1,-1 );
-
-         if ( tot_itr->net_weight == asset(0) && tot_itr->cpu_weight == asset(0)  && tot_itr->ram_bytes == 0 ) {
-            totals_tbl.erase( tot_itr );
-         }
-      } // tot_itr can be invalid, should go out of scope
-
-      // create refund or update from existing refund
-      if ( N(gstio.stake) != source_stake_from ) { //for gstio both transfer and refund make no sense
-         refunds_table refunds_tbl( _self, from );
-         auto req = refunds_tbl.find( from );
-
-         //create/update/delete refund
-         auto net_balance = stake_net_delta;
-         auto cpu_balance = stake_cpu_delta;
-         bool need_deferred_trx = false;
-
-
-         // net and cpu are same sign by assertions in delegatebw and undelegatebw
-         // redundant assertion also at start of changebw to protect against misuse of changebw
-         bool is_undelegating = (net_balance.amount + cpu_balance.amount ) < 0;
-         bool is_delegating_to_self = (!transfer && from == receiver);
-
-         if( is_delegating_to_self || is_undelegating ) {
-            if ( req != refunds_tbl.end() ) { //need to update refund
-               refunds_tbl.modify( req, 0, [&]( refund_request& r ) {
-                  if ( net_balance < asset(0) || cpu_balance < asset(0) ) {
-                     r.request_time = now();
-                  }
-                  r.net_amount -= net_balance;
-                  if ( r.net_amount < asset(0) ) {
-                     net_balance = -r.net_amount;
-                     r.net_amount = asset(0);
-                  } else {
-                     net_balance = asset(0);
-                  }
-                  r.cpu_amount -= cpu_balance;
-                  if ( r.cpu_amount < asset(0) ){
-                     cpu_balance = -r.cpu_amount;
-                     r.cpu_amount = asset(0);
-                  } else {
-                     cpu_balance = asset(0);
-                  }
-               });
-
-               gstio_assert( asset(0) <= req->net_amount, "negative net refund amount" ); //should never happen
-               gstio_assert( asset(0) <= req->cpu_amount, "negative cpu refund amount" ); //should never happen
-
-               if ( req->net_amount == asset(0) && req->cpu_amount == asset(0) ) {
-                  refunds_tbl.erase( req );
-                  need_deferred_trx = false;
-               } else {
-                  need_deferred_trx = true;
-               }
-
-            } else if ( net_balance < asset(0) || cpu_balance < asset(0) ) { //need to create refund
-               refunds_tbl.emplace( from, [&]( refund_request& r ) {
-                  r.owner = from;
-                  if ( net_balance < asset(0) ) {
-                     r.net_amount = -net_balance;
-                     net_balance = asset(0);
-                  } // else r.net_amount = 0 by default constructor
-                  if ( cpu_balance < asset(0) ) {
-                     r.cpu_amount = -cpu_balance;
-                     cpu_balance = asset(0);
-                  } // else r.cpu_amount = 0 by default constructor
-                  r.request_time = now();
-               });
-               need_deferred_trx = true;
-            } // else stake increase requested with no existing row in refunds_tbl -> nothing to do with refunds_tbl
-         } /// end if is_delegating_to_self || is_undelegating
-
-         if ( need_deferred_trx ) {
-            gstio::transaction out;
-            out.actions.emplace_back( permission_level{ from, N(active) }, _self, N(refund), from );
-            out.delay_sec = refund_delay;
-            cancel_deferred( from ); // TODO: Remove this line when replacing deferred trxs is fixed
-            out.send( from, from, true );
-         } else {
-            cancel_deferred( from );
-         }
-
-         auto transfer_amount = net_balance + cpu_balance;
-         if ( asset(0) < transfer_amount ) {
-            INLINE_ACTION_SENDER(gstio::token, transfer)( N(gstio.token), {source_stake_from, N(active)},
-               { source_stake_from, N(gstio.stake), asset(transfer_amount), std::string("stake bandwidth") } );
-         }
-      }
-
-      // update voting power
-      {
-         asset total_update = stake_net_delta + stake_cpu_delta;
-         auto from_voter = _voters.find(from);
-         if( from_voter == _voters.end() ) {
-            from_voter = _voters.emplace( from, [&]( auto& v ) {
-                  v.owner  = from;
-                  v.staked = total_update.amount;
-               });
-         } else {
-            _voters.modify( from_voter, 0, [&]( auto& v ) {
-                  v.staked += total_update.amount;
-               });
-         }
-         gstio_assert( 0 <= from_voter->staked, "stake for voting cannot be negative");
-         if( from == N(b1) ) {
-            validate_b1_vesting( from_voter->staked );
-         }
-
-         if( from_voter->producers.size() || from_voter->proxy ) {
-            update_votes( from, from_voter->proxy, from_voter->producers, false );
-         }
-      }
-   }
-	/////////
-	/////////
-	/////////
-
-
-
-
-   void system_contract::changebw( account_name from, account_name receiver,
-                                   const asset stake_net_delta, const asset stake_cpu_delta, bool transfer )
-   {
-      require_auth( from );
-      gstio_assert( stake_net_delta != asset(0) || stake_cpu_delta != asset(0), "should stake non-zero amount" );
-      gstio_assert( std::abs( (stake_net_delta + stake_cpu_delta).amount )
-                     >= std::max( std::abs( stake_net_delta.amount ), std::abs( stake_cpu_delta.amount ) ),
-                    "net and cpu deltas cannot be opposite signs" );
-
-      account_name source_stake_from = from;
-      if ( transfer ) {
-         from = receiver;
-      }
-
-      // update stake delegated from "from" to "receiver"
-      {
-         del_bandwidth_table     del_tbl( _self, from);
-         auto itr = del_tbl.find( receiver );
-         if( itr == del_tbl.end() ) {
-            itr = del_tbl.emplace( from, [&]( auto& dbo ){
-                  dbo.from          = from;
-                  dbo.to            = receiver;
-                  dbo.net_weight    = stake_net_delta;
-                  dbo.cpu_weight    = stake_cpu_delta;
-               });
-         }
-         else {
-            del_tbl.modify( itr, 0, [&]( auto& dbo ){
-                  dbo.net_weight    += stake_net_delta;
-                  dbo.cpu_weight    += stake_cpu_delta;
-               });
-         }
-         gstio_assert( asset(0) <= itr->net_weight, "insufficient staked net bandwidth" );
-         gstio_assert( asset(0) <= itr->cpu_weight, "insufficient staked cpu bandwidth" );
-         if ( itr->net_weight == asset(0) && itr->cpu_weight == asset(0) ) {
-            del_tbl.erase( itr );
-         }
-      } // itr can be invalid, should go out of scope
-
-      // update totals of "receiver"
-      {
-         user_resources_table   totals_tbl( _self, receiver );
-         auto tot_itr = totals_tbl.find( receiver );
-         if( tot_itr ==  totals_tbl.end() ) {
-            tot_itr = totals_tbl.emplace( from, [&]( auto& tot ) {
-                  tot.owner = receiver;
-                  tot.net_weight    = stake_net_delta;
-                  tot.cpu_weight    = stake_cpu_delta;
-               });
-         } else {
-            totals_tbl.modify( tot_itr, from == receiver ? from : 0, [&]( auto& tot ) {
-                  tot.net_weight    += stake_net_delta;
-                  tot.cpu_weight    += stake_cpu_delta;
-               });
-         }
-         gstio_assert( asset(0) <= tot_itr->net_weight, "insufficient staked total net bandwidth" );
-         gstio_assert( asset(0) <= tot_itr->cpu_weight, "insufficient staked total cpu bandwidth" );
-
-      //   set_resource_limits( receiver, tot_itr->ram_bytes, tot_itr->net_weight.amount, tot_itr->cpu_weight.amount );
-		 set_resource_limits(receiver, -1, -1, -1);
-
-         if ( tot_itr->net_weight == asset(0) && tot_itr->cpu_weight == asset(0)  && tot_itr->ram_bytes == 0 ) {
-            totals_tbl.erase( tot_itr );
-         }
-      } // tot_itr can be invalid, should go out of scope
-
-      // create refund or update from existing refund
-      if ( N(gstio.stake) != source_stake_from ) { //for gstio both transfer and refund make no sense
-         refunds_table refunds_tbl( _self, from );
-         auto req = refunds_tbl.find( from );
-
-         //create/update/delete refund
-         auto net_balance = stake_net_delta;
-         auto cpu_balance = stake_cpu_delta;
-         bool need_deferred_trx = false;
-
-
-         // net and cpu are same sign by assertions in delegatebw and undelegatebw
-         // redundant assertion also at start of changebw to protect against misuse of changebw
-         bool is_undelegating = (net_balance.amount + cpu_balance.amount ) < 0;
-         bool is_delegating_to_self = (!transfer && from == receiver);
-
-         if( is_delegating_to_self || is_undelegating ) {
-            if ( req != refunds_tbl.end() ) { //need to update refund
-               refunds_tbl.modify( req, 0, [&]( refund_request& r ) {
-                  if ( net_balance < asset(0) || cpu_balance < asset(0) ) {
-                     r.request_time = now();
-                  }
-                  r.net_amount -= net_balance;
-                  if ( r.net_amount < asset(0) ) {
-                     net_balance = -r.net_amount;
-                     r.net_amount = asset(0);
-                  } else {
-                     net_balance = asset(0);
-                  }
-                  r.cpu_amount -= cpu_balance;
-                  if ( r.cpu_amount < asset(0) ){
-                     cpu_balance = -r.cpu_amount;
-                     r.cpu_amount = asset(0);
-                  } else {
-                     cpu_balance = asset(0);
-                  }
-               });
-
-               gstio_assert( asset(0) <= req->net_amount, "negative net refund amount" ); //should never happen
-               gstio_assert( asset(0) <= req->cpu_amount, "negative cpu refund amount" ); //should never happen
-
-               if ( req->net_amount == asset(0) && req->cpu_amount == asset(0) ) {
-                  refunds_tbl.erase( req );
-                  need_deferred_trx = false;
-               } else {
-                  need_deferred_trx = true;
-               }
-
-            } else if ( net_balance < asset(0) || cpu_balance < asset(0) ) { //need to create refund
-               refunds_tbl.emplace( from, [&]( refund_request& r ) {
-                  r.owner = from;
-                  if ( net_balance < asset(0) ) {
-                     r.net_amount = -net_balance;
-                     net_balance = asset(0);
-                  } // else r.net_amount = 0 by default constructor
-                  if ( cpu_balance < asset(0) ) {
-                     r.cpu_amount = -cpu_balance;
-                     cpu_balance = asset(0);
-                  } // else r.cpu_amount = 0 by default constructor
-                  r.request_time = now();
-               });
-               need_deferred_trx = true;
-            } // else stake increase requested with no existing row in refunds_tbl -> nothing to do with refunds_tbl
-         } /// end if is_delegating_to_self || is_undelegating
-
-         if ( need_deferred_trx ) {
-            gstio::transaction out;
-            out.actions.emplace_back( permission_level{ from, N(active) }, _self, N(refund), from );
-            out.delay_sec = refund_delay;
-            cancel_deferred( from ); // TODO: Remove this line when replacing deferred trxs is fixed
-            out.send( from, from, true );
-         } else {
-            cancel_deferred( from );
-         }
-
-         auto transfer_amount = net_balance + cpu_balance;
-         if ( asset(0) < transfer_amount ) {
-            INLINE_ACTION_SENDER(gstio::token, transfer)( N(gstio.token), {source_stake_from, N(active)},
-               { source_stake_from, N(gstio.stake), asset(transfer_amount), std::string("stake bandwidth") } );
-         }
-      }
-
-      // update voting power
-      {
-         asset total_update = stake_net_delta + stake_cpu_delta;
-         auto from_voter = _voters.find(from);
-         if( from_voter == _voters.end() ) {
-            from_voter = _voters.emplace( from, [&]( auto& v ) {
-                  v.owner  = from;
-                  v.staked = total_update.amount;
-               });
-         } else {
-            _voters.modify( from_voter, 0, [&]( auto& v ) {
-                  v.staked += total_update.amount;
-               });
-         }
-         gstio_assert( 0 <= from_voter->staked, "stake for voting cannot be negative");
-         if( from == N(b1) ) {
-            validate_b1_vesting( from_voter->staked );
-         }
-
-         if( from_voter->producers.size() || from_voter->proxy ) {
-            update_votes( from, from_voter->proxy, from_voter->producers, false );
-         }
-      }
-   }
-/////
- void system_contract::mydelegatebw( account_name from, account_name receiver,
-                                     asset stake_net_quantity,
-                                     asset stake_cpu_quantity, bool transfer )
-   {
-      gstio_assert( stake_cpu_quantity >= asset(0), "must stake a positive amount" );
-      gstio_assert( stake_net_quantity >= asset(0), "must stake a positive amount" );
-      gstio_assert( stake_net_quantity + stake_cpu_quantity > asset(0), "must stake a positive amount" );
-      gstio_assert( !transfer || from != receiver, "cannot use transfer flag if delegating to self" );
-
-      changebw_create_account( from, receiver, stake_net_quantity, stake_cpu_quantity, transfer);
-   } 
-
-
-
-////
-   void system_contract::delegatebw( account_name from, account_name receiver,
-                                     asset stake_net_quantity,
-                                     asset stake_cpu_quantity, bool transfer )
-   {
-      gstio_assert( stake_cpu_quantity >= asset(0), "must stake a positive amount" );
-      gstio_assert( stake_net_quantity >= asset(0), "must stake a positive amount" );
-      gstio_assert( stake_net_quantity + stake_cpu_quantity > asset(0), "must stake a positive amount" );
-      gstio_assert( !transfer || from != receiver, "cannot use transfer flag if delegating to self" );
-
-      changebw( from, receiver, stake_net_quantity, stake_cpu_quantity, transfer);
-   } // delegatebw
-
-   void system_contract::undelegatebw( account_name from, account_name receiver,
-                                       asset unstake_net_quantity, asset unstake_cpu_quantity )
-   {
-      gstio_assert( asset() <= unstake_cpu_quantity, "must unstake a positive amount" );
-      gstio_assert( asset() <= unstake_net_quantity, "must unstake a positive amount" );
-      gstio_assert( asset() < unstake_cpu_quantity + unstake_net_quantity, "must unstake a positive amount" );
-      gstio_assert( _gstate.total_activated_stake >= min_activated_stake,
-                    "cannot undelegate bandwidth until the chain is activated (at least 15% of all tokens participate in voting)" );
-
-      changebw( from, receiver, -unstake_net_quantity, -unstake_cpu_quantity, false);
-   } // undelegatebw
-
-
-   void system_contract::refund( const account_name owner ) {
-      require_auth( owner );
-
-      refunds_table refunds_tbl( _self, owner );
-      auto req = refunds_tbl.find( owner );
-      gstio_assert( req != refunds_tbl.end(), "refund request not found" );
-      gstio_assert( req->request_time + refund_delay <= now(), "refund is not available yet" );
-      // Until now() becomes NOW, the fact that now() is the timestamp of the previous block could in theory
-      // allow people to get their tokens earlier than the 3 day delay if the unstake happened immediately after many
-      // consecutive missed blocks.
-
-      INLINE_ACTION_SENDER(gstio::token, transfer)( N(gstio.token), {N(gstio.stake),N(active)},
-                                                    { N(gstio.stake), req->owner, req->net_amount + req->cpu_amount, std::string("unstake") } );
-
-      refunds_tbl.erase( req );
-   }
+
+
 
 
 } //namespace gstiosystem
