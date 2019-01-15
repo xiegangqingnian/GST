@@ -78,7 +78,7 @@ namespace gstio {
 
 		gstio_assert(quantity.is_valid(), "invalid quantity");
 		gstio_assert(quantity.amount > 0, "must transfer positive quantity");
-		//    gstio_assert( quantity.symbol == st.supply.symbol, "symbol precision mismatch" );
+	    gstio_assert( quantity.symbol == st.supply.symbol, "symbol precision mismatch" );
 		gstio_assert(memo.size() <= 256, "memo has more than 256 bytes");
 
 		//    gstio::print("quantity amount :", quantity.amount, ",  quantity amount :", quantity.amount,"\n");
