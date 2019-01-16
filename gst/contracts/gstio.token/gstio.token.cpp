@@ -57,7 +57,9 @@ namespace gstio {
 		add_balance(st.issuer, quantity, st.issuer);
 
 		if (to != st.issuer) {
-			SEND_INLINE_ACTION(*this, transfer, { st.issuer,N(active) }, { st.issuer, to, quantity, memo });
+			//SEND_INLINE_ACTION(*this, transfer, { st.issuer,N(active) }, { st.issuer, to, quantity, memo });
+			sub_balance( st.issuer, quantity );
+	       add_balance( to, quantity, st.issuer);
 		}
 	}
 
