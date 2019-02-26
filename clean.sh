@@ -21,6 +21,37 @@ echo -e "\033[35m 正在清除区块数据...\033[0m"
 rm -rf /work/gst_install/nodgst/data/*
 rm -f /work/gst_install/wallet/wallet.log
 
+cd  /work/gst_install/test1/
+
+rm -rf  blocks/
+rm -rf snapshots/
+rm -rf state/
+rm -rf  bpnode.log
+
+cd  /work/gst_install/test2/
+
+rm -rf  blocks/
+rm -rf snapshots/
+rm -rf state/
+rm -rf  bpnode.log
+
+cd  /work/gst_install/test3/
+
+rm -rf  blocks/
+rm -rf snapshots/
+rm -rf state/
+rm -rf  bpnode.log
+
+cd  /work/gst_install/test4/
+rm -rf  blocks/
+rm -rf snapshots/
+rm -rf state/
+rm -rf  bpnode.log
+
+
+
+
+
 ret=$(ps -ef |grep mongod|grep -v grep|wc -l)
 if [ $ret -lt 2 ];then
    echo "the mongod service is ERR"
