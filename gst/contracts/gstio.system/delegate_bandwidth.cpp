@@ -31,11 +31,11 @@ namespace gstiosystem {
 	
 	static constexpr time refund_delay = 3*24*3600;
 	static constexpr time refund_expiration_time = 3600;
-	static constexpr time  reward_time = 24*3600;  
-
-	static int64_t  reward_vote = 2'000'000'0000.0;//利息计算方法 抵押*时间/reward_value
-	static int64_t reward_max = 100000000;//利息值放大倍数10的8次方  1gst 1天 0.0000'0432
-	static int64_t   value = 432;// *0.00000432*100000000
+//	static constexpr time  reward_time = 24*3600;  
+	static constexpr time  reward_time = 10;  
+	static int64_t  reward_vote = 2'000'000'0000.0;//    利息计算方法 抵押*时间/reward_vote
+	static int64_t reward_max = 100000000;//最低可取利息值
+	static int64_t   value = 432;// 0.00000432*100000000  利息值放大倍数10的8次方   1gst 1天 0.0000'0432
 
 
 	struct user_resources {
@@ -153,7 +153,7 @@ namespace gstiosystem {
 					tot.cpu_weight = stake_cpu_delta;
 					tot.del_time = now();
 					tot.staked = stake_net_delta + stake_cpu_delta;
-					//				  gstio::print("tot.reward5 :", tot.staked.amount, " tot.pay_time-tot.del_time:",tot.pay_time-tot.del_time,"\n");			
+					//		  gstio::print("tot.reward5 :", tot.staked.amount, " tot.pay_time-tot.del_time:",tot.pay_time-tot.del_time,"\n");			
 				});
 			}
 			else {
@@ -305,36 +305,37 @@ namespace gstiosystem {
 
 
 
-	////
+	////asset stake_cpu_quantity,  stake_cpu_quantity, 
 	void system_contract::delegatebw(account_name from, account_name receiver,
 		asset stake_net_quantity,
-		asset stake_cpu_quantity, bool transfer)
+		 bool transfer)
 	{
-		gstio::print("stake_net_quantity :", stake_net_quantity.amount, ",  stake_cpu_quantity :", stake_cpu_quantity.amount, "\n");
+	//	gstio::print("stake_net_quantity :", stake_net_quantity.amount, ",  stake_cpu_quantity :", stake_cpu_quantity.amount, "\n");
 
 
-		gstio_assert(stake_cpu_quantity >= asset(0), "must stake a positive amount");
+	//	gstio_assert(stake_cpu_quantity >= asset(0), "must stake a positive amount");
 		gstio_assert(stake_net_quantity >= asset(0), "must stake a positive amount");
-		gstio_assert(stake_net_quantity + stake_cpu_quantity > asset(0), "must stake a positive amount");
+		//gstio_assert(stake_net_quantity + stake_cpu_quantity > asset(0), "must stake a positive amount");
 		gstio_assert(!transfer || from != receiver, "cannot use transfer flag if delegating to self");
 
 		gstio::print("account_name :", from, ",  account_name :", receiver, "\n");
 
 
-		changebw(from, receiver, stake_net_quantity, stake_cpu_quantity, transfer);
-	} // delegatebw
+		changebw(from, receiver, stake_net_quantity, asset(0),transfer);
+	} // delegatebw  , asset unstake_cpu_quantity)
+	
 
 	void system_contract::undelegatebw(account_name from, account_name receiver,
-		asset unstake_net_quantity, asset unstake_cpu_quantity)
+		asset unstake_net_quantity)
 	{
-		gstio_assert(asset() <= unstake_cpu_quantity, "must unstake a positive amount");
+		//	gstio_assert(asset() <= unstake_cpu_quantity, "must unstake a positive amount");
 		gstio_assert(asset() <= unstake_net_quantity, "must unstake a positive amount");
-		gstio_assert(asset() < unstake_cpu_quantity + unstake_net_quantity, "must unstake a positive amount");
+	//	gstio_assert(asset() < unstake_cpu_quantity + unstake_net_quantity, "must unstake a positive amount");
 		gstio_assert(_gstate.total_activated_stake >= min_activated_stake,
 			"cannot undelegate bandwidth until the chain is activated (at least 15% of all tokens participate in voting)");
 
-		changebw(from, receiver, -unstake_net_quantity, -unstake_cpu_quantity, false);
-	} // undelegatebw
+		changebw(from, receiver, -unstake_net_quantity,asset(0), false);
+	} // undelegatebw  -unstake_cpu_quantity,
 
 
 	void system_contract::refund(const account_name owner) {

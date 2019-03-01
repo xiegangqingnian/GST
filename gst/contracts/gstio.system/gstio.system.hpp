@@ -151,7 +151,7 @@ namespace gstiosystem {
  *  Else 'from' can unstake at any time.
  */
 		void delegatebw(account_name from, account_name receiver,
-			asset stake_net_quantity, asset stake_cpu_quantity, bool transfer);
+			asset stake_net_quantity,  bool transfer);
 
 
 		/**
@@ -171,7 +171,7 @@ namespace gstiosystem {
 		 *  all producer tallies are updated.
 		 */
 		void undelegatebw(account_name from, account_name receiver,
-			asset unstake_net_quantity, asset unstake_cpu_quantity);
+			asset unstake_net_quantity);
 
 
 		/**

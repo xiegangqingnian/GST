@@ -190,7 +190,6 @@
          {"name":"from", "type":"account_name"},
          {"name":"receiver", "type":"account_name"},
          {"name":"stake_net_quantity", "type":"asset"},
-         {"name":"stake_cpu_quantity", "type":"asset"},
          {"name":"transfer", "type":"bool"}
       ]
     },{
@@ -200,7 +199,6 @@
          {"name":"from", "type":"account_name"},
          {"name":"receiver", "type":"account_name"},
          {"name":"unstake_net_quantity", "type":"asset"},
-         {"name":"unstake_cpu_quantity", "type":"asset"}
       ]
     },{
       "name": "refund",
@@ -215,7 +213,6 @@
          {"name":"from", "type":"account_name"},
          {"name":"to", "type":"account_name"},
          {"name":"net_weight", "type":"asset"},
-         {"name":"cpu_weight", "type":"asset"}
       ]
     },{
       "name": "user_resources",

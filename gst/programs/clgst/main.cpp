@@ -1278,7 +1278,7 @@ struct delegate_bandwidth_subcommand {
 	string from_str;
 	string receiver_str;
 	string stake_net_amount;
-	string stake_cpu_amount;
+	//string stake_cpu_amount;
 	string stake_storage_amount;
 	string buy_ram_amount;
 	uint32_t buy_ram_bytes = 0;
@@ -1289,7 +1289,7 @@ struct delegate_bandwidth_subcommand {
 		delegate_bandwidth->add_option("from", from_str, localized("The account to delegate bandwidth from"))->required();
 		delegate_bandwidth->add_option("receiver", receiver_str, localized("The account to receive the delegated bandwidth"))->required();
 		delegate_bandwidth->add_option("stake_net_quantity", stake_net_amount, localized("The amount of GST to stake for network bandwidth"))->required();
-		delegate_bandwidth->add_option("stake_cpu_quantity", stake_cpu_amount, localized("The amount of GST to stake for CPU bandwidth"))->required();
+	//	delegate_bandwidth->add_option("stake_cpu_quantity", stake_cpu_amount, localized("The amount of GST to stake for CPU bandwidth"))->required();
 		delegate_bandwidth->add_option("--buyram", buy_ram_amount, localized("The amount of GST to buyram"));
 		delegate_bandwidth->add_option("--buy-ram-bytes", buy_ram_bytes, localized("The amount of RAM to buy in number of bytes"));
 		delegate_bandwidth->add_flag("--transfer", transfer, localized("Transfer voting power and right to unstake GST to receiver"));
@@ -1300,7 +1300,7 @@ struct delegate_bandwidth_subcommand {
 				("from", from_str)
 				("receiver", receiver_str)
 				("stake_net_quantity", to_asset(stake_net_amount))
-				("stake_cpu_quantity", to_asset(stake_cpu_amount))
+		//		("stake_cpu_quantity", to_asset(stake_cpu_amount))
 				("transfer", transfer);
 			std::vector<chain::action> acts{ create_action({permission_level{from_str,config::active_name}}, config::system_account_name, N(delegatebw), act_payload) };
 			GSTC_ASSERT(!(buy_ram_amount.size()) || !buy_ram_bytes, "ERROR: --buyram and --buy-ram-bytes cannot be set at the same time");
@@ -1319,7 +1319,7 @@ struct undelegate_bandwidth_subcommand {
 	string from_str;
 	string receiver_str;
 	string unstake_net_amount;
-	string unstake_cpu_amount;
+//	string unstake_cpu_amount;
 	uint64_t unstake_storage_bytes;
 
 	undelegate_bandwidth_subcommand(CLI::App* actionRoot) {
@@ -1327,15 +1327,15 @@ struct undelegate_bandwidth_subcommand {
 		undelegate_bandwidth->add_option("from", from_str, localized("The account undelegating bandwidth"))->required();
 		undelegate_bandwidth->add_option("receiver", receiver_str, localized("The account to undelegate bandwidth from"))->required();
 		undelegate_bandwidth->add_option("unstake_net_quantity", unstake_net_amount, localized("The amount of GST to undelegate for network bandwidth"))->required();
-		undelegate_bandwidth->add_option("unstake_cpu_quantity", unstake_cpu_amount, localized("The amount of GST to undelegate for CPU bandwidth"))->required();
+	//	undelegate_bandwidth->add_option("unstake_cpu_quantity", unstake_cpu_amount, localized("The amount of GST to undelegate for CPU bandwidth"))->required();
 		add_standard_transaction_options(undelegate_bandwidth);
 
 		undelegate_bandwidth->set_callback([this] {
 			fc::variant act_payload = fc::mutable_variant_object()
 				("from", from_str)
 				("receiver", receiver_str)
-				("unstake_net_quantity", to_asset(unstake_net_amount))
-				("unstake_cpu_quantity", to_asset(unstake_cpu_amount));
+				("unstake_net_quantity", to_asset(unstake_net_amount));
+//				("unstake_cpu_quantity", to_asset(unstake_cpu_amount));
 			send_actions({ create_action({permission_level{from_str,config::active_name}}, config::system_account_name, N(undelegatebw), act_payload) });
 		});
 	}
@@ -1747,7 +1747,7 @@ void get_account(const string& accountName, const string& coresym, bool json_for
 
 		 //    std::cout << "cpu bandwidth:" << std::endl;
 
-		if (res.total_resources.is_object()) {
+/*		if (res.total_resources.is_object()) {
 			auto cpu_total = to_asset(res.total_resources.get_object()["cpu_weight"].as_string());
 
 			if (res.self_delegated_bandwidth.is_object()) {
@@ -1767,7 +1767,7 @@ void get_account(const string& accountName, const string& coresym, bool json_for
 				 //                << std::string(11, ' ') << "(total staked delegated to account from others)" << std::endl;
 			}
 		}
-
+*/
 
 		//   std::cout << std::fixed << setprecision(3);
 		 //  std::cout << indent << std::left << std::setw(11) << "used:"      << std::right << std::setw(18) << to_pretty_time( res.cpu_limit.used ) << "\n";
@@ -1803,8 +1803,7 @@ void get_account(const string& accountName, const string& coresym, bool json_for
 		}
 
 		if (res.core_liquid_balance.valid()) {
-			//	asset   rewards = *res.reward;
-			// 	int64_t aa = rewards / asset(1);
+      
 
 			std::cout << res.core_liquid_balance->get_symbol().name() << " balances: " << std::endl;
 			std::cout << indent << std::left << std::setw(11)

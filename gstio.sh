@@ -107,7 +107,7 @@ echo -e "\033[32m 4. 发行代币 GST 发行人gstio ...\033[0m"
 clgst push action gstio.token create '["gstio", "1000000000.0000 GST"]' -p gstio.token
 
 echo -e "\033[32m 5. 将代币GST资产打入gstio账户 ...\033[0m"
-clgst push action gstio.token issue '["gstio", "1000000000.0000 GST", "issue message"]' -p gstio
+clgst push action gstio.token issue '["gstio", "700000000.0000 GST", "issue message"]' -p gstio
 
 echo -e "\033[32m 6. 安装gstio.system 合约...\033[0m"
 clgst set contract gstio build/contracts/gstio.system -p gstio -x 1000
@@ -206,25 +206,24 @@ echo -e "\033[31m---------------------------------------------------------------
 
 
 
-
 echo -e "\033[32m voter1 抵押 150000000.0000 GST for cpu, 0 GST for net...\033[0m"
-clgst system delegatebw voter1 voter1 "50000000.0000 GST" "0 GST"
+clgst system delegatebw voter1 voter1 "50000000.0000 GST" 
 
 echo -e "\033[32m voter2 抵押 150000000.0000 GST for cpu, 10000.0000 GST for net...\033[0m"
-clgst system delegatebw voter2 voter2 "50000000.0000 GST" "10000.0000 GST"
+clgst system delegatebw voter2 voter2 "50000000.0000 GST" 
 
 echo -e "\033[32m voter3 抵押 90000.0000 GST for cpu, 10000.0000 GST for net...\033[0m"
-clgst system delegatebw voter3 voter3 "50000000.0000 GST" "10000.0000 GST"
+clgst system delegatebw voter3 voter3 "50000000.0000 GST" 
 
 echo -e "\033[32m voter4 抵押 90000.0000 GST for cpu, 10000.0000 GST for net...\033[0m"
-clgst system delegatebw voter4 voter4 "0.0001 GST" "0.0001 GST"
+clgst system delegatebw voter4 voter4 "90000.0000 GST" 
 
 echo -e "\033[32m voter5 抵押 1.0000 GST for cpu, 0.0000 GST for net...\033[0m"
-clgst system delegatebw voter5 voter5 "1.0000 GST" "1.0000 GST"
+clgst system delegatebw voter5 voter5 "1.0000 GST" 
 
 echo -e "\033[31m----------------------------------------------------------------------\033[0m"
 
-echo -e "\033[32m voter1 投票选举节点 bp1...\033[0m"
+#echo -e "\033[32m voter1 投票选举节点 bp1...\033[0m"
 #clgst system voteproducer prods voter1  bp1
 #clgst system voteproducer prods voter2  bp2
 #clgst system listproducers  
