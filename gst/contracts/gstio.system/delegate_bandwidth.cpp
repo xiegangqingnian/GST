@@ -34,8 +34,8 @@ namespace gstiosystem {
 //	static constexpr time  reward_time = 24*3600;  
 	static constexpr time  reward_time = 10;  
 	static int64_t  reward_vote = 2'000'000'0000.0;//    利息计算方法 抵押*时间/reward_vote
-	static int64_t reward_max = 100000000;//最低可取利息值
-	static int64_t   value = 432;// 0.00000432*100000000  利息值放大倍数10的8次方   1gst 1天 0.0000'0432
+	static int64_t reward_max = 100000000;//最低可取利息值// 0.00000432*100000000  利息值放大倍数10的8次方   1gst 1天 0.0000'0432
+//	static int64_t  value = ;
 
 
 	struct user_resources {
@@ -105,7 +105,7 @@ namespace gstiosystem {
 		const asset stake_net_delta, const asset stake_cpu_delta, bool transfer)
 	{
 		require_auth(from);
-		gstio_assert(stake_net_delta != asset(0) || stake_cpu_delta != asset(0), "should stake non-zero amount");
+		gstio_assert(stake_net_delta != asset(0) , "should stake non-zero amount");
 		gstio_assert(std::abs((stake_net_delta + stake_cpu_delta).amount)
 			>= std::max(std::abs(stake_net_delta.amount), std::abs(stake_cpu_delta.amount)),
 			"net and cpu deltas cannot be opposite signs");
@@ -159,15 +159,11 @@ namespace gstiosystem {
 			else {
 				totals_tbl.modify(tot_itr, from == receiver ? from : 0, [&](auto& tot) {
 					tot.pay_time = now();
-					//  gstio::print("tot.reward7 :", tot.staked.amount, " tot.pay_time-tot.del_time:",tot.pay_time-tot.del_time,"\n");			
-
-					//gstio::print("tot.reward4 :", tot.reward.amount, " tot.pay_time-tot.del_time:",tot.pay_time-tot.del_time,"\n");			
 					tot.net_weight += stake_net_delta;
 					tot.cpu_weight += stake_cpu_delta;
-					// gstio::print("tot.reward1 :", tot.reward.amount, " tot.pay_time-tot.del_time:",tot.pay_time-tot.del_time,"\n");													 
+					
+					tot.reward += (tot.pay_time - tot.del_time) / reward_time * tot.staked / asset(1).amount/10000;   //截止本次 抵押/撤回 操作时当前的利息值value * 
 
-					tot.reward += (tot.pay_time - tot.del_time) / reward_time * tot.staked * value;   //截止本次 抵押/撤回 操作时当前的利息值value * 
-					  //gstio::print("tot.reward7 :", tot.staked.amount, " tot.pay_time-tot.del_time:",tot.pay_time-tot.del_time,"\n");
 					gstio::print("tot.reward2 :", tot.reward.amount, " tot.pay_time-tot.del_time:", tot.pay_time - tot.del_time, "\n");
 
 
@@ -329,12 +325,12 @@ namespace gstiosystem {
 		asset unstake_net_quantity)
 	{
 		//	gstio_assert(asset() <= unstake_cpu_quantity, "must unstake a positive amount");
-		gstio_assert(asset() <= unstake_net_quantity, "must unstake a positive amount");
+	gstio_assert(asset() <= unstake_net_quantity, "must unstake a positive amount");
 	//	gstio_assert(asset() < unstake_cpu_quantity + unstake_net_quantity, "must unstake a positive amount");
-		gstio_assert(_gstate.total_activated_stake >= min_activated_stake,
+			gstio_assert(_gstate.total_activated_stake >= min_activated_stake,
 			"cannot undelegate bandwidth until the chain is activated (at least 15% of all tokens participate in voting)");
 
-		changebw(from, receiver, -unstake_net_quantity,asset(0), false);
+	changebw(from, receiver, -unstake_net_quantity,asset(0), false);
 	} // undelegatebw  -unstake_cpu_quantity,
 
 
@@ -361,25 +357,21 @@ namespace gstiosystem {
 	void system_contract::voterewards(const account_name& owner) {
 		require_auth(owner);
 
-		asset	  max_available_reward;// reward amount for transfer
-		asset   virtual_reward;//reward amount
-
 		user_resources_table   totals_tbl(_self, owner);
 		auto tot_itr = totals_tbl.find(owner);
 
 		totals_tbl.modify(tot_itr, 0, [&](auto& tot) {
 
-			gstio_assert(tot.reward.amount >= reward_max, "reward is not available yet");//利息值要大于0.0001  才可提取
+	//		gstio_assert(tot.reward.amount >= reward_max, "reward is not available yet");//利息值要大于0.0001  才可提取
 			gstio::print("tot......reward :", tot.reward.amount, "\n");
 
-			max_available_reward = tot.reward / reward_max;
-			virtual_reward = max_available_reward * reward_max;
-			gstio::print("max_available_reward.amount :", max_available_reward.amount, "\n");
-			tot.reward -= virtual_reward;
-
-
+		//	gstio::print("max_available_reward.amount :", max_available_reward.amount, "\n");
+			
 			INLINE_ACTION_SENDER(gstio::token, transfer)(N(gstio.token), { N(gstio.vote),N(active) },
-				{ N(gstio.vote), tot_itr->owner, asset(max_available_reward), std::string("voter  reward") });
+				{ N(gstio.vote), tot_itr->owner, asset(tot.reward), std::string("voter  reward") });
+
+			tot.reward = asset();
+		
 		});
 	}
 
