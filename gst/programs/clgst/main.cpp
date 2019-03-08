@@ -1813,7 +1813,7 @@ void get_account(const string& accountName, const string& coresym, bool json_for
 			std::cout << indent << std::left << std::setw(11)
 				<< "unstaking:" << std::right << std::setw(18) << unstaking << std::endl;
 			std::cout << indent << std::left << std::setw(11)
-				<< "reward :" << std::right << std::setw(18) << *res.reward << "D" << std::endl;
+				<< "reward :" << std::right << std::setw(18) << *res.reward << std::endl;
 			std::cout << indent << std::left << std::setw(11) << "total:" << std::right << std::setw(18) << (*res.core_liquid_balance + staked + unstaking) << std::endl;
 
 			std::cout << std::endl;
