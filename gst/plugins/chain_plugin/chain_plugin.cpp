@@ -1792,7 +1792,8 @@ if( options.count(name) ) { \
 							vector<char> data;
 							copy_inline_row(*it, data);
 							result.total_resources = abis.binary_to_variant("user_resources", data, abi_serializer_max_time, shorten_abi_errors);
-							result.reward = asset::from_string(result.total_resources.get_object()["reward"].as_string());
+							result.votereward = asset::from_string(result.total_resources.get_object()["votereward"].as_string());
+							result.prodreward = asset::from_string(result.total_resources.get_object()["prodreward"].as_string());
 						}
 					}
 				}

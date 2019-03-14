@@ -1,9 +1,21 @@
 #!/bin/bash
+echo -e "\033[35m 正在停止区块nodgst服务...\033[0m"
+pkill nodgst
+sleep 0.5
+echo -e "\033[35m 正在停止钱包kgstd服务...\033[0m"
+pkill kgstd
+sleep 3s
+
+echo -e "\033[31m----------------------------------------------------------------------\033[0m"
+echo -e "\033[35m 正在清除区块数据...\033[0m"
+rm -rf /work/gst_install/nodgst/data/*
+rm -f /work/gst_install/wallet/wallet.log
 
 ret=$(ps -ef |grep mongod|grep -v grep|wc -l)
 if [ $ret -lt 2 ];then
    echo "the mongod service is ERR"
-   systemctl start mongod
+   #systemctl start mongod
+   mongod -f /root/opt/mongodb/mongodb.conf
 fi
 mongo 127.0.0.1:27017/gstdb  --eval 'db.dropDatabase();'
 
@@ -58,8 +70,8 @@ rm -rf  bpnode.log
 sleep 2s
 
 nohup nodgst --data-dir ./ --config-dir ./  --genesis-json=genesis.json --max-transaction-time=3000 > /work/gst_install/test4/bpnode.log 2>&1 &
-
-
+nohup /work/gst_install/gst/build/bin/kgstd --data-dir=/work/gst_install/wallet \
+--config-dir=/work/gst_install/wallet > /work/gst_install/wallet/wallet.log 2>&1 &
 
 echo "PW5Ka7m2J2wLAhA3wbJPQ9XhFMc5KVLVE2qYTETr6cEvwqyrTGJAw" | clgst wallet unlock
 
@@ -94,7 +106,7 @@ echo -e "\033[32m 正在安装合约...\033[0m"
 cd /work/gst_install/gst
 
 echo -e "\033[32m 1. 安装gstio.bios合约...\033[0m"
-#clgst set contract gstio build/contracts/gstio.bios -p gstio
+clgst set contract gstio build/contracts/gstio.bios -p gstio
  
 
 echo -e "\033[32m 2. 安装gstio.token合约...\033[0m"
@@ -171,8 +183,8 @@ echo -e "\033[31m---------------------------------------------------------------
 
 clgst transfer gstio  gstio.vote "50000000.0000 GST" -p gstio
 
-echo -e "\033[32m 将151000000.0000 GST 从gstio转账到voter1...\033[0m"
-clgst transfer gstio voter1 "151000000.0000 GST" -p gstio
+echo -e "\033[32m 将160000000.0000 GST 从gstio转账到voter1...\033[0m"
+clgst transfer gstio voter1 "160000000.0000 GST" -p gstio
 
 echo -e "\033[32m 将120000.0000 GST 从gstio转账到voter2...\033[0m"
 clgst transfer gstio voter2 "151000000.0000 GST" -p gstio
@@ -207,19 +219,19 @@ echo -e "\033[31m---------------------------------------------------------------
 
 
 echo -e "\033[32m voter1 抵押 150000000.0000 GST for cpu, 0 GST for net...\033[0m"
-clgst system delegatebw voter1 voter1 "50000000.0000 GST" 
+clgst system delegatebw voter1 voter1 "151000000.0000 GST" 
 
 echo -e "\033[32m voter2 抵押 150000000.0000 GST for cpu, 10000.0000 GST for net...\033[0m"
-clgst system delegatebw voter2 voter2 "50000000.0000 GST" 
+clgst system delegatebw voter2 voter2 "151000000.0000 GST" 
 
 echo -e "\033[32m voter3 抵押 90000.0000 GST for cpu, 10000.0000 GST for net...\033[0m"
-clgst system delegatebw voter3 voter3 "50000000.0000 GST" 
+clgst system delegatebw voter3 voter3 "151000000.0000 GST" 
 
 echo -e "\033[32m voter4 抵押 90000.0000 GST for cpu, 10000.0000 GST for net...\033[0m"
-clgst system delegatebw voter4 voter4 "90000.0000 GST" 
+clgst system delegatebw voter4 voter4 "120000.0000 GST" 
 
-echo -e "\033[32m voter5 抵押 1.0000 GST for cpu, 0.0000 GST for net...\033[0m"
-clgst system delegatebw voter5 voter5 "1.0000 GST" 
+#echo -e "\033[32m voter5 抵押 1.0000 GST for cpu, 0.0000 GST for net...\033[0m"
+#clgst system delegatebw voter5 voter5 "10.0000 GST" 
 
 echo -e "\033[31m----------------------------------------------------------------------\033[0m"
 

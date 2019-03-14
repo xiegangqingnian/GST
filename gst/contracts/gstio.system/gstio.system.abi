@@ -222,10 +222,11 @@
          {"name":"net_weight", "type":"asset"},
          {"name":"cpu_weight", "type":"asset"},
          {"name":"ram_bytes", "type":"uint64"},
-	 {"name":"reward", "type":"asset"},
-	 {"name":"del_time", "type":"time_point_sec"},
-	 {"name":"pay_time", "type":"time_point_sec"},
-	 {"name":"staked", "type":"asset"}
+	       {"name":"votereward", "type":"asset"},
+         {"name":"prodreward", "type":"asset"},
+	       {"name":"del_time", "type":"time_point_sec"},
+	       {"name":"pay_time", "type":"time_point_sec"},
+	       {"name":"staked", "type":"asset"}
       ]
     },{
       "name": "total_resources",
@@ -235,7 +236,8 @@
          {"name":"net_weight", "type":"asset"},
          {"name":"cpu_weight", "type":"asset"},
          {"name":"ram_bytes", "type":"uint64"},
-	 {"name":"reward", "type":"asset"},
+	       {"name":"votereward", "type":"asset"},
+         {"name":"prodreward", "type":"asset"},
       ]
     },{
       "name": "refund_request",
@@ -358,6 +360,18 @@
       ]
     },{
       "name": "claimrewards",
+      "base": "",
+      "fields": [
+        {"name":"owner",   "type":"account_name"}
+      ]
+    },{
+      "name": "prodrewards",
+      "base": "",
+      "fields": [
+        {"name":"owner",   "type":"account_name"}
+      ]
+    },{
+      "name": "claimvrew",
       "base": "",
       "fields": [
         {"name":"owner",   "type":"account_name"}
@@ -544,6 +558,14 @@
    },{
       "name": "claimrewards",
       "type": "claimrewards",
+      "ricardian_contract": ""
+   },{
+      "name": "prodrewards",
+      "type": "prodrewards",
+      "ricardian_contract": ""
+   },{
+      "name": "claimvrew",
+      "type": "claimvrew",
       "ricardian_contract": ""
    },{
       "name": "setpriv",

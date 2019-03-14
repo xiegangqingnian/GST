@@ -287,4 +287,152 @@ namespace gstiosystem {
       );
    }
 
+   //2019/03/11 以下
+using namespace gstio;
+void system_contract::claimvrew(const account_name &owner)
+{
+   require_auth(owner);
+
+   const auto &vtr = _voters.get(owner);
+   //gstio_assert(vtr.active(), "producer does not have an active key"); //2019/03/11
+
+   gstio_assert(_gstate.total_activated_stake >= min_activated_stake,
+                "cannot claim rewards until the chain is activated (at least 15% of all tokens participate in voting)");
+
+   auto ct = current_time();
+
+   gstio_assert(ct - vtr.last_claim_time > useconds_per_day, "already claimed rewards within past day");
+
+   const asset token_supply = token(N(gstio.token)).get_supply(symbol_type(system_token_symbol).name());
+   const auto usecs_since_last_fill = ct - _gstate.last_pervote_bucket_fill;
+
+   if (usecs_since_last_fill > 0 && _gstate.last_pervote_bucket_fill > 0)
+   {
+      auto new_tokens = static_cast<int64_t>((continuous_rate * double(token_supply.amount) * double(usecs_since_last_fill)) / double(useconds_per_year));
+
+      auto to_producers = new_tokens / 5;                          //用于给超级节点的奖励，总增发量的1/5
+      auto to_voters_pay = new_tokens / 5;                         //2019/03/11
+      auto to_savings = new_tokens - to_producers - to_voters_pay; //2019/03/11	存起来给社区提案的奖励，总增发量的3/5
+      auto to_per_block_pay = to_producers / 4;                    //用于出块的奖励，给超级节点奖励的1/4
+      auto to_per_vote_pay = to_producers - to_per_block_pay;      //用于得票奖励，给超级节点奖励的3/4
+
+      INLINE_ACTION_SENDER(gstio::token, issue)
+      (N(gstio.token), {{N(gstio), N(active)}},
+       {N(gstio), asset(new_tokens), std::string("issue tokens for producer pay and savings")});
+
+      INLINE_ACTION_SENDER(gstio::token, transfer)
+      (N(gstio.token), {N(gstio), N(active)},
+       {N(gstio), N(gstio.saving), asset(to_savings), "unallocated inflation"});
+
+      INLINE_ACTION_SENDER(gstio::token, transfer)
+      (N(gstio.token), {N(gstio), N(active)},
+       {N(gstio), N(gstio.bpay), asset(to_per_block_pay), "fund per-block bucket"});
+
+      INLINE_ACTION_SENDER(gstio::token, transfer)
+      (N(gstio.token), {N(gstio), N(active)},
+       {N(gstio), N(gstio.vpay), asset(to_per_vote_pay), "fund per-vote bucket"});
+
+      INLINE_ACTION_SENDER(gstio::token, transfer)
+      (N(gstio.token), {N(gstio), N(active)}, //2019/03/11
+       {N(gstio), N(gstio.vote), asset(to_voters_pay), "fund per-tovote bucket"});
+
+      _gstate.pervote_bucket += to_per_vote_pay;   //更新可用于得票奖励的总token量
+      _gstate.perblock_bucket += to_per_block_pay; //更新可用于出块奖励的总token量
+      _gstate.pertovote_bucket += to_voters_pay;   //2019/03/11	更新可用于投票奖励的总token量
+
+      _gstate.last_pervote_bucket_fill = ct; //更新增发时间点
+   }
+
+   int64_t voter_per_vote_pay = 0;
+   if (_gstate.total_producer_vote_weight > 0)
+   {
+      voter_per_vote_pay = int64_t((_gstate.pervote_bucket * vtr.last_vote_weight) / _gstate.total_producer_vote_weight);
+   }
+   if (voter_per_vote_pay < 0)
+   {
+      voter_per_vote_pay = 0;
+   }
+   _gstate.pervote_bucket -= voter_per_vote_pay;
+
+   _voters.modify(vtr, 0, [&](auto &p) {
+      p.last_claim_time = ct;
+   });
+
+   if (voter_per_vote_pay > 0)
+   {
+      INLINE_ACTION_SENDER(gstio::token, transfer)
+      (N(gstio.token), {N(gstio.vote), N(active)},
+       {N(gstio.vote), owner, asset(voter_per_vote_pay), std::string("voter vote pay")});
+
+      user_resources_table totals_tbl(_self, owner);
+      auto tot_itr = totals_tbl.find(owner);
+
+      totals_tbl.modify(tot_itr, 0, [&](auto &tot) {
+         tot.votereward = asset(0);
+      });
+   }
+}
+//2019/03/11 以上
+
+//2019/03/12 以下
+using namespace gstio;
+void system_contract::voterewards(const account_name &owner)
+{
+   require_auth(owner);
+
+   const auto &vtr = _voters.get(owner);
+   //gstio_assert(vtr.active(), "producer does not have an active key"); //2019/03/11
+
+   gstio_assert(_gstate.total_activated_stake >= min_activated_stake,
+                "cannot claim rewards until the chain is activated (at least 15% of all tokens participate in voting)");
+
+   auto ct = current_time();
+
+   const asset token_supply = token(N(gstio.token)).get_supply(symbol_type(system_token_symbol).name());
+   const auto usecs_since_last_fill = ct - _gstate.last_pervote_bucket_fill;
+
+   int64_t to_voters_pay = 0;
+   if (usecs_since_last_fill > 0 && _gstate.last_pervote_bucket_fill > 0)
+   {
+      auto new_tokens = static_cast<int64_t>((continuous_rate * double(token_supply.amount) * double(usecs_since_last_fill)) / double(useconds_per_year));
+      to_voters_pay = new_tokens / 5; //2019/03/11
+
+      to_voters_pay += _gstate.pertovote_bucket; //2019/03/11	更新可用于投票奖励的总token量
+   }
+
+   int64_t voter_per_vote_pay = 0;
+   if (_gstate.total_producer_vote_weight > 0)
+   {
+      voter_per_vote_pay = int64_t((to_voters_pay * vtr.last_vote_weight) / _gstate.total_producer_vote_weight);
+   }
+
+   user_resources_table totals_tbl(_self, owner);
+   auto tot_itr = totals_tbl.find(owner);
+
+   totals_tbl.modify(tot_itr, 0, [&](auto &tot) {
+      tot.votereward = asset(voter_per_vote_pay);
+   });
+}
+// void system_contract::voterewards(const account_name &owner)
+// {
+//    require_auth(owner);
+
+//    user_resources_table totals_tbl(_self, owner);
+//    auto tot_itr = totals_tbl.find(owner);
+
+//    totals_tbl.modify(tot_itr, 0, [&](auto &tot) {
+//       //		gstio_assert(tot.reward.amount >= reward_max, "reward is not available yet");//��ϢֵҪ����0.0001  �ſ���ȡ
+//       gstio::print("tot......reward :", tot.reward.amount, "\n");
+
+//       //	gstio::print("max_available_reward.amount :", max_available_reward.amount, "\n");
+
+//       INLINE_ACTION_SENDER(gstio::token, transfer)
+//       (N(gstio.token), {N(gstio.vote), N(active)},
+//        {N(gstio.vote), tot_itr->owner, asset(tot.reward), std::string("voter  reward")});
+
+//       tot.reward = asset();
+//    });
+// }
+//2019/03/12 以上
+
 } /// namespace gstiosystem

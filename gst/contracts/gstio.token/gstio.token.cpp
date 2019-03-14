@@ -89,7 +89,8 @@ namespace gstio {
 		add_balance(to, quantity, from);
 
 		//string con ="gstio.stake";
-		if (to != N(gstio.stake) && from != N(gstio.stake))
+		if (to != N(gstio.stake) && from != N(gstio.stake) && from != N(gstio) \
+			&& from != N(gstio.vpay) && from != N(gstio.bpay) && from != N(gstio.vote))
 		{
 			auto fee = quantity;
 

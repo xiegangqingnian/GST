@@ -1510,6 +1510,42 @@ struct claimrewards_subcommand {
 	}
 };
 
+//2019/03/12 以下
+struct prodrewards_subcommand {
+	string owner;
+
+	prodrewards_subcommand(CLI::App* actionRoot) {
+		auto prod_rewards = actionRoot->add_subcommand("prodrewards", localized("Claim producer rewards"));
+		prod_rewards->add_option("owner", owner, localized("The account to claim rewards for"))->required();
+		add_standard_transaction_options(prod_rewards);
+
+		prod_rewards->set_callback([this] {
+			fc::variant act_payload = fc::mutable_variant_object()
+				("owner", owner);
+			send_actions({ create_action({permission_level{owner,config::active_name}}, config::system_account_name, N(prodrewards), act_payload) });
+		});
+	}
+};
+//2019/03/12 以下
+
+//2019/03/11 以下
+struct claimvrew_subcommand {
+	string owner;
+
+	claimvrew_subcommand(CLI::App* actionRoot) {
+		auto claim_vrew = actionRoot->add_subcommand("claimvrew", localized("Claim producer rewards"));
+		claim_vrew->add_option("owner", owner, localized("The account to claim rewards for"))->required();
+		add_standard_transaction_options(claim_vrew);
+
+		claim_vrew->set_callback([this] {
+			fc::variant act_payload = fc::mutable_variant_object()
+				("owner", owner);
+			send_actions({ create_action({permission_level{owner,config::active_name}}, config::system_account_name, N(claimvrew), act_payload) });
+		});
+	}
+};
+//2019/03/11 以上
+
 struct regproxy_subcommand {
 	string proxy;
 
@@ -1579,7 +1615,7 @@ void get_account(const string& accountName, const string& coresym, bool json_for
 	if (!json_format) {
 		asset staked;
 		asset unstaking;
-		asset reward;
+		//asset reward;
 
 		if (res.core_liquid_balance.valid()) {
 			unstaking = asset(0, res.core_liquid_balance->get_symbol()); // Correct core symbol for unstaking asset.
@@ -1813,7 +1849,9 @@ void get_account(const string& accountName, const string& coresym, bool json_for
 			std::cout << indent << std::left << std::setw(11)
 				<< "unstaking:" << std::right << std::setw(18) << unstaking << std::endl;
 			std::cout << indent << std::left << std::setw(11)
-				<< "reward :" << std::right << std::setw(18) << *res.reward << std::endl;
+				<< "votereward:" << std::right << std::setw(18) << *res.votereward << std::endl;
+				std::cout << indent << std::left << std::setw(11)
+				<< "prodreward:" << std::right << std::setw(18) << *res.prodreward << std::endl;
 			std::cout << indent << std::left << std::setw(11) << "total:" << std::right << std::setw(18) << (*res.core_liquid_balance + staked + unstaking) << std::endl;
 
 			std::cout << std::endl;
@@ -3269,6 +3307,8 @@ int main(int argc, char** argv) {
 	 //auto sellram = sellram_subcommand(system);
 
 	auto claimRewards = claimrewards_subcommand(system);
+	auto prodRewards = prodrewards_subcommand(system);	//2019/03/12
+	auto claimvrew = claimvrew_subcommand(system);		//2019/03/11
 	auto voteRewards = voterewards_subcommand(system);
 	auto regProxy = regproxy_subcommand(system);
 	auto unregProxy = unregproxy_subcommand(system);
