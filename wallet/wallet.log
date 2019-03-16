@@ -1,0 +1,35 @@
+info  2019-03-14T05:00:13.531 thread-0  http_plugin.cpp:422           plugin_initialize    ] configured http to listen on 0.0.0.0:8900
+info  2019-03-14T05:00:13.531 thread-0  wallet_plugin.cpp:42          plugin_initialize    ] initializing wallet plugin
+error 2019-03-14T05:00:13.532 thread-0  wallet_api_plugin.cpp:123     plugin_initialize    ] 
+********!!!SECURITY ERROR!!!********
+*                                  *
+* --       Wallet API           -- *
+* - EXPOSED to the LOCAL NETWORK - *
+* -  HTTP RPC is NOT encrypted   - *
+* - Password and/or Private Keys - *
+* - are at HIGH risk of exposure - *
+*                                  *
+************************************
+
+info  2019-03-14T05:00:13.532 thread-0  http_plugin.cpp:554           add_handler          ] add api url: /v1/kgstd/stop
+info  2019-03-14T05:00:13.532 thread-0  http_plugin.cpp:486           plugin_startup       ] start listening for http requests
+info  2019-03-14T05:00:13.532 thread-0  wallet_api_plugin.cpp:73      plugin_startup       ] starting wallet_api_plugin
+info  2019-03-14T05:00:13.532 thread-0  http_plugin.cpp:554           add_handler          ] add api url: /v1/wallet/create
+info  2019-03-14T05:00:13.532 thread-0  http_plugin.cpp:554           add_handler          ] add api url: /v1/wallet/create_key
+info  2019-03-14T05:00:13.532 thread-0  http_plugin.cpp:554           add_handler          ] add api url: /v1/wallet/get_public_keys
+info  2019-03-14T05:00:13.532 thread-0  http_plugin.cpp:554           add_handler          ] add api url: /v1/wallet/import_key
+info  2019-03-14T05:00:13.532 thread-0  http_plugin.cpp:554           add_handler          ] add api url: /v1/wallet/list_keys
+info  2019-03-14T05:00:13.533 thread-0  http_plugin.cpp:554           add_handler          ] add api url: /v1/wallet/list_wallets
+info  2019-03-14T05:00:13.533 thread-0  http_plugin.cpp:554           add_handler          ] add api url: /v1/wallet/lock
+info  2019-03-14T05:00:13.533 thread-0  http_plugin.cpp:554           add_handler          ] add api url: /v1/wallet/lock_all
+info  2019-03-14T05:00:13.533 thread-0  http_plugin.cpp:554           add_handler          ] add api url: /v1/wallet/open
+info  2019-03-14T05:00:13.533 thread-0  http_plugin.cpp:554           add_handler          ] add api url: /v1/wallet/remove_key
+info  2019-03-14T05:00:13.533 thread-0  http_plugin.cpp:554           add_handler          ] add api url: /v1/wallet/set_timeout
+info  2019-03-14T05:00:13.533 thread-0  http_plugin.cpp:554           add_handler          ] add api url: /v1/wallet/sign_digest
+info  2019-03-14T05:00:13.533 thread-0  http_plugin.cpp:554           add_handler          ] add api url: /v1/wallet/sign_transaction
+info  2019-03-14T05:00:13.533 thread-0  http_plugin.cpp:554           add_handler          ] add api url: /v1/wallet/unlock
+error 2019-03-14T05:00:25.686 thread-0  http_plugin.cpp:580           handle_exception     ] FC Exception encountered while processing wallet.unlock
+debug 2019-03-14T05:00:25.686 thread-0  http_plugin.cpp:581           handle_exception     ] Exception Details: 3120007 wallet_unlocked_exception: Already unlocked
+Wallet is already unlocked: default
+    {"w":"default"}
+    thread-0  wallet_manager.cpp:185 unlock
