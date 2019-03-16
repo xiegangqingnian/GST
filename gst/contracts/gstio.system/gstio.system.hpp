@@ -123,17 +123,15 @@ struct user_resources
 	asset net_weight;
 	asset cpu_weight;
 	int64_t ram_bytes = 0;
-	asset votereward;
-	asset prodreward; //2019/03/12
-	time del_time;
-	time pay_time;
+	asset votereward = asset(0);
+	asset prodreward = asset(0); //2019/03/12
 
-	asset staked;
+	//asset staked;
 
 	uint64_t primary_key() const { return owner; }
 
 	// explicit serialization macro is not necessary, used here only to improve compilation time
-	GSTLIB_SERIALIZE(user_resources, (owner)(net_weight)(cpu_weight)(ram_bytes)(votereward)(prodreward)(del_time)(pay_time)(staked))
+	GSTLIB_SERIALIZE(user_resources, (owner)(net_weight)(cpu_weight)(ram_bytes)(votereward)(prodreward))
 };
 
 typedef gstio::multi_index<N(userres), user_resources> user_resources_table;

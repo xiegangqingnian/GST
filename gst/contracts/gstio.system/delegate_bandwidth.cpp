@@ -135,23 +135,14 @@ void system_contract::changebw(account_name from, account_name receiver,
 				tot.owner = receiver;
 				tot.net_weight = stake_net_delta;
 				tot.cpu_weight = stake_cpu_delta;
-				tot.del_time = now();
-				tot.staked = stake_net_delta + stake_cpu_delta;
 			});
 		}
 		else
 		{
 			totals_tbl.modify(tot_itr, from == receiver ? from : 0, [&](auto &tot) {
-				tot.pay_time = now();
+				
 				tot.net_weight += stake_net_delta;
 				tot.cpu_weight += stake_cpu_delta;
-
-				//tot.reward += (tot.pay_time - tot.del_time) / reward_time * tot.staked / asset(1).amount/10000;   //��ֹ���� ��Ѻ/���� ����ʱ��ǰ����Ϣֵvalue *
-
-				//gstio::print("tot.reward2 :", tot.reward.amount, " tot.pay_time-tot.del_time:", tot.pay_time - tot.del_time, "\n");
-
-				//tot.del_time = tot.pay_time;
-				//tot.staked += stake_net_delta + stake_cpu_delta;
 			});
 		}
 		gstio_assert(asset(0) <= tot_itr->net_weight, "insufficient staked total net bandwidth");

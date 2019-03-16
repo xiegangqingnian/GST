@@ -1615,12 +1615,10 @@ void get_account(const string& accountName, const string& coresym, bool json_for
 	if (!json_format) {
 		asset staked;
 		asset unstaking;
-		//asset reward;
 
 		if (res.core_liquid_balance.valid()) {
 			unstaking = asset(0, res.core_liquid_balance->get_symbol()); // Correct core symbol for unstaking asset.
 			staked = asset(0, res.core_liquid_balance->get_symbol());    // Correct core symbol for staked asset.
-	   //	 reward= asset( 0, res.core_liquid_balance->get_symbol() ); 
 		}
 
 		std::cout << "created: " << string(res.created) << std::endl;
@@ -1708,37 +1706,37 @@ void get_account(const string& accountName, const string& coresym, bool json_for
 
 
 
-		//      std::cout << "memory: " << std::endl
-		 //               << indent << "quota: " << std::setw(15) << to_pretty_net(res.ram_quota) << "  used: " << std::setw(15) << to_pretty_net(res.ram_usage) << std::endl << std::endl;
+		//       std::cout << "memory: " << std::endl
+		//                 << indent << "quota: " << std::setw(15) << to_pretty_net(res.ram_quota) << "  used: " << std::setw(15) << to_pretty_net(res.ram_usage) << std::endl << std::endl;
 
-		  //    std::cout << "net bandwidth: " << std::endl;
-		if (res.total_resources.is_object()) {
+		//       std::cout << "net bandwidth: " << std::endl;
+		// if (res.total_resources.is_object()) {
 
-			auto net_total = to_asset(res.total_resources.get_object()["net_weight"].as_string());
-			if (net_total.get_symbol() != unstaking.get_symbol()) {
-				// Core symbol of nodgst responding to the request is different than core symbol built into clgst
-				unstaking = asset(0, net_total.get_symbol()); // Correct core symbol for unstaking asset.
-				staked = asset(0, net_total.get_symbol()); // Correct core symbol for staked asset.
-			}
+		// 	auto net_total = to_asset(res.total_resources.get_object()["net_weight"].as_string());
+		// 	if (net_total.get_symbol() != unstaking.get_symbol()) {
+		// 		// Core symbol of nodgst responding to the request is different than core symbol built into clgst
+		// 		unstaking = asset(0, net_total.get_symbol()); // Correct core symbol for unstaking asset.
+		// 		staked = asset(0, net_total.get_symbol()); // Correct core symbol for staked asset.
+		// 	}
 
-			if (res.self_delegated_bandwidth.is_object()) {
-				asset net_own = asset::from_string(res.self_delegated_bandwidth.get_object()["net_weight"].as_string());
-				staked = net_own;
+		// 	if (res.self_delegated_bandwidth.is_object()) {
+		// 		asset net_own = asset::from_string(res.self_delegated_bandwidth.get_object()["net_weight"].as_string());
+		// 		staked = net_own;
 
 
-				auto net_others = net_total - net_own;
+		// 		auto net_others = net_total - net_own;
 
-				/*          std::cout << indent << "staked:" << std::setw(20) << net_own
-									<< std::string(11, ' ') << "(total stake delegated from account to self)" << std::endl
-									<< indent << "delegated:" << std::setw(17) << net_others
-									<< std::string(11, ' ') << "(total staked delegated to account from others)" << std::endl;  */
-			}
-			else {
-				auto net_others = net_total;
-				/*          std::cout << indent << "delegated:" << std::setw(17) << net_others
-									<< std::string(11, ' ') << "(total staked delegated to account from others)" << std::endl; */
-			}
-		}
+		// 		        std::cout << indent << "staked:" << std::setw(20) << net_own
+		// 							<< std::string(11, ' ') << "(total stake delegated from account to self)" << std::endl
+		// 							<< indent << "delegated:" << std::setw(17) << net_others
+		// 							<< std::string(11, ' ') << "(total staked delegated to account from others)" << std::endl;  */
+		// 	}
+		// 	else {
+		// 		auto net_others = net_total;
+		// 		         std::cout << indent << "delegated:" << std::setw(17) << net_others
+		// 							<< std::string(11, ' ') << "(total staked delegated to account from others)" << std::endl; */
+		// 	}
+		// }
 
 
 		auto to_pretty_time = [](int64_t nmicro, uint8_t width_for_units = 5) {
@@ -1776,86 +1774,114 @@ void get_account(const string& accountName, const string& coresym, bool json_for
 
 
 		//     std::cout << std::fixed << setprecision(3);
-		 //    std::cout << indent << std::left << std::setw(11) << "used:"      << std::right << std::setw(18) << to_pretty_net( res.net_limit.used ) << "\n";
-		 //    std::cout << indent << std::left << std::setw(11) << "available:" << std::right << std::setw(18) << to_pretty_net( res.net_limit.available ) << "\n";
-		 //    std::cout << indent << std::left << std::setw(11) << "limit:"     << std::right << std::setw(18) << to_pretty_net( res.net_limit.max ) << "\n";
-		 //    std::cout << std::endl;
+		//     std::cout << indent << std::left << std::setw(11) << "used:"      << std::right << std::setw(18) << to_pretty_net( res.net_limit.used ) << "\n";
+		//     std::cout << indent << std::left << std::setw(11) << "available:" << std::right << std::setw(18) << to_pretty_net( res.net_limit.available ) << "\n";
+		//     std::cout << indent << std::left << std::setw(11) << "limit:"     << std::right << std::setw(18) << to_pretty_net( res.net_limit.max ) << "\n";
+		//     std::cout << std::endl;
 
-		 //    std::cout << "cpu bandwidth:" << std::endl;
+		//     std::cout << "cpu bandwidth:" << std::endl;
 
-/*		if (res.total_resources.is_object()) {
-			auto cpu_total = to_asset(res.total_resources.get_object()["cpu_weight"].as_string());
+		// if (res.total_resources.is_object()) {
+		// 	auto cpu_total = to_asset(res.total_resources.get_object()["cpu_weight"].as_string());
 
-			if (res.self_delegated_bandwidth.is_object()) {
-				asset cpu_own = asset::from_string(res.self_delegated_bandwidth.get_object()["cpu_weight"].as_string());
-				staked += cpu_own;
+		// 	if (res.self_delegated_bandwidth.is_object()) {
+		// 		asset cpu_own = asset::from_string(res.self_delegated_bandwidth.get_object()["cpu_weight"].as_string());
+		// 		staked += cpu_own;
 
-				auto cpu_others = cpu_total - cpu_own;
+		// 		auto cpu_others = cpu_total - cpu_own;
 
-				//          std::cout << indent << "staked:" << std::setw(20) << cpu_own
-				 //                   << std::string(11, ' ') << "(total stake delegated from account to self)" << std::endl
-				 //                   << indent << "delegated:" << std::setw(17) << cpu_others
-				  //                  << std::string(11, ' ') << "(total staked delegated to account from others)" << std::endl;
-			}
-			else {
-				auto cpu_others = cpu_total;
-				//       std::cout << indent << "delegated:" << std::setw(17) << cpu_others
-				 //                << std::string(11, ' ') << "(total staked delegated to account from others)" << std::endl;
-			}
-		}
-*/
+		// 		          std::cout << indent << "staked:" << std::setw(20) << cpu_own
+		// 		                    << std::string(11, ' ') << "(total stake delegated from account to self)" << std::endl
+		// 		                    << indent << "delegated:" << std::setw(17) << cpu_others
+		// 		                    << std::string(11, ' ') << "(total staked delegated to account from others)" << std::endl;
+		// 	}
+		// 	else {
+		// 		auto cpu_others = cpu_total;
+		// 		       std::cout << indent << "delegated:" << std::setw(17) << cpu_others
+		// 		                 << std::string(11, ' ') << "(total staked delegated to account from others)" << std::endl;
+		// 	}
+		// }
+
 
 		//   std::cout << std::fixed << setprecision(3);
-		 //  std::cout << indent << std::left << std::setw(11) << "used:"      << std::right << std::setw(18) << to_pretty_time( res.cpu_limit.used ) << "\n";
-		 //  std::cout << indent << std::left << std::setw(11) << "available:" << std::right << std::setw(18) << to_pretty_time( res.cpu_limit.available ) << "\n";
-		  // std::cout << indent << std::left << std::setw(11) << "limit:"     << std::right << std::setw(18) << to_pretty_time( res.cpu_limit.max ) << "\n";
-		 //  std::cout << std::endl;
+		//   std::cout << indent << std::left << std::setw(11) << "used:"      << std::right << std::setw(18) << to_pretty_time( res.cpu_limit.used ) << "\n";
+		//   std::cout << indent << std::left << std::setw(11) << "available:" << std::right << std::setw(18) << to_pretty_time( res.cpu_limit.available ) << "\n";
+		//   std::cout << indent << std::left << std::setw(11) << "limit:"     << std::right << std::setw(18) << to_pretty_time( res.cpu_limit.max ) << "\n";
+		//   std::cout << std::endl;
 
-		if (res.refund_request.is_object()) {
+		// if (res.refund_request.is_object()) {
+		// 	auto obj = res.refund_request.get_object();
+		// 	auto request_time = fc::time_point_sec::from_iso_string(obj["request_time"].as_string());
+		// 	fc::time_point refund_time = request_time + fc::days(3);
+		// 	auto now = res.head_block_time;
+		// 	asset net = asset::from_string(obj["net_amount"].as_string());
+		// 	asset cpu = asset::from_string(obj["cpu_amount"].as_string());
+		// 	unstaking = net + cpu;
+
+
+		// 	if (unstaking > asset(0, unstaking.get_symbol())) {
+		// 		       std::cout << std::fixed << setprecision(3);
+		// 	           std::cout << "unstaking tokens:" << std::endl;
+		// 	           std::cout << indent << std::left << std::setw(25) << "time of unstake request:" << std::right << std::setw(20) << string(request_time);
+		// 		if (now >= refund_time) {
+		// 			          std::cout << " (available to claim now with 'gstio::refund' action)\n";
+		// 		}
+		// 		else {
+		// 			         std::cout << " (funds will be available in " << to_pretty_time( (refund_time - now).count(), 0 ) << ")\n";
+		// 		}
+		// 		     std::cout << indent << std::left << std::setw(25) << "from net bandwidth:" << std::right << std::setw(18) << net << std::endl;
+		// 		     std::cout << indent << std::left << std::setw(25) << "from cpu bandwidth:" << std::right << std::setw(18) << cpu << std::endl;
+		// 		     std::cout << indent << std::left << std::setw(25) << "total:" << std::right << std::setw(18) << unstaking << std::endl;
+		// 		     std::cout << std::endl;
+		// 	}
+		// }
+		
+		//2019/03/15 以下
+		if (res.core_liquid_balance.valid()) {
+			std::cout << res.core_liquid_balance->get_symbol().name() << " balances: " << std::endl;
+			std::cout << indent << std::left << std::setw(11)
+				<< "liquid:" << std::right << std::setw(18) << *res.core_liquid_balance << std::endl;
+			// std::cout << indent << std::left << std::setw(11)
+			// 	<< "staked:" << std::right << std::setw(18) << staked << std::endl;
+			// std::cout << indent << std::left << std::setw(11)
+			// 	<< "unstaking:" << std::right << std::setw(18) << unstaking << std::endl;
+			// std::cout << indent << std::left << std::setw(11) << "total:" << std::right << std::setw(18) << (*res.core_liquid_balance + staked + unstaking) << std::endl;
+
+			// std::cout << std::endl;
+		}
+
+		if (res.self_delegated_bandwidth.is_object()) {
+			auto obj = res.self_delegated_bandwidth.get_object();
+			asset staked = asset::from_string(obj["net_weight"].as_string());
+			std::cout << indent << std::left << std::setw(11)
+				<< "staked:" << std::right << std::setw(18) << staked << std::endl;
+
+		}
+
+		if(res.refund_request.is_object()){
 			auto obj = res.refund_request.get_object();
 			auto request_time = fc::time_point_sec::from_iso_string(obj["request_time"].as_string());
 			fc::time_point refund_time = request_time + fc::days(3);
 			auto now = res.head_block_time;
-			asset net = asset::from_string(obj["net_amount"].as_string());
-			asset cpu = asset::from_string(obj["cpu_amount"].as_string());
-			unstaking = net + cpu;
-
-
-			if (unstaking > asset(0, unstaking.get_symbol())) {
-				//        std::cout << std::fixed << setprecision(3);
-			  //          std::cout << "unstaking tokens:" << std::endl;
-			   //         std::cout << indent << std::left << std::setw(25) << "time of unstake request:" << std::right << std::setw(20) << string(request_time);
-				if (now >= refund_time) {
-					//           std::cout << " (available to claim now with 'gstio::refund' action)\n";
-				}
-				else {
-					//          std::cout << " (funds will be available in " << to_pretty_time( (refund_time - now).count(), 0 ) << ")\n";
-				}
-				//      std::cout << indent << std::left << std::setw(25) << "from net bandwidth:" << std::right << std::setw(18) << net << std::endl;
-				//      std::cout << indent << std::left << std::setw(25) << "from cpu bandwidth:" << std::right << std::setw(18) << cpu << std::endl;
-				 //     std::cout << indent << std::left << std::setw(25) << "total:" << std::right << std::setw(18) << unstaking << std::endl;
-				  //    std::cout << std::endl;
-			}
+			asset unstaking = asset::from_string(obj["net_amount"].as_string());
+			std::cout << indent << std::left << std::setw(11)
+				<< "unstaking:" << std::right << std::setw(18) << unstaking << " (funds will be available in " 
+				<< to_pretty_time( (refund_time - now).count(), 0 ) << ")" << std::endl;
 		}
 
-		if (res.core_liquid_balance.valid()) {
-      
-
-			std::cout << res.core_liquid_balance->get_symbol().name() << " balances: " << std::endl;
+		if (res.total_resources.is_object()) {
+			auto obj = res.total_resources.get_object();
+			asset votereward = asset::from_string(obj["votereward"].as_string());
+			asset prodreward = asset::from_string(obj["prodreward"].as_string());
 			std::cout << indent << std::left << std::setw(11)
-				<< "liquid:" << std::right << std::setw(18) << *res.core_liquid_balance << std::endl;
+				<< "votereward:" << std::right << std::setw(18) << votereward << std::endl;
 			std::cout << indent << std::left << std::setw(11)
-				<< "staked:" << std::right << std::setw(18) << staked << std::endl;
-			std::cout << indent << std::left << std::setw(11)
-				<< "unstaking:" << std::right << std::setw(18) << unstaking << std::endl;
-			std::cout << indent << std::left << std::setw(11)
-				<< "votereward:" << std::right << std::setw(18) << *res.votereward << std::endl;
-				std::cout << indent << std::left << std::setw(11)
-				<< "prodreward:" << std::right << std::setw(18) << *res.prodreward << std::endl;
-			std::cout << indent << std::left << std::setw(11) << "total:" << std::right << std::setw(18) << (*res.core_liquid_balance + staked + unstaking) << std::endl;
-
+				<< "prodreward:" << std::right << std::setw(18) << prodreward << std::endl;
+			
 			std::cout << std::endl;
 		}
+		//2019/03/15 以上
+
 
 		if (res.voter_info.is_object()) {
 			auto& obj = res.voter_info.get_object();

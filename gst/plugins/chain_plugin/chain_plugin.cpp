@@ -1528,7 +1528,7 @@ if( options.count(name) ) { \
 		fc::variant read_only::get_block_header_state(const get_block_header_state_params& params) const {
 			block_state_ptr b;
 			optional<uint64_t> block_num;
-			std::exception_ptr e;
+			//std::exception_ptr e;
 			try {
 				block_num = fc::to_uint64(params.block_num_or_id);
 			}
@@ -1779,22 +1779,18 @@ if( options.count(name) ) { \
 
 						if (bal.get_symbol().valid() && bal.get_symbol() == core_symbol) {
 							result.core_liquid_balance = bal;
-
-
 						}
 					}
+				}
 
-					t_id = d.find<chain::table_id_object, chain::by_code_scope_table>(boost::make_tuple(config::system_account_name, params.account_name, N(userres)));
-					if (t_id != nullptr) {
-						const auto &idx = d.get_index<key_value_index, by_scope_primary>();
-						auto it = idx.find(boost::make_tuple(t_id->id, params.account_name));
-						if (it != idx.end()) {
-							vector<char> data;
-							copy_inline_row(*it, data);
-							result.total_resources = abis.binary_to_variant("user_resources", data, abi_serializer_max_time, shorten_abi_errors);
-							result.votereward = asset::from_string(result.total_resources.get_object()["votereward"].as_string());
-							result.prodreward = asset::from_string(result.total_resources.get_object()["prodreward"].as_string());
-						}
+				t_id = d.find<chain::table_id_object, chain::by_code_scope_table>(boost::make_tuple(config::system_account_name, params.account_name, N(userres)));
+				if (t_id != nullptr) {
+					const auto &idx = d.get_index<key_value_index, by_scope_primary>();
+					auto it = idx.find(boost::make_tuple(t_id->id, params.account_name));
+					if (it != idx.end()) {
+						vector<char> data;
+						copy_inline_row(*it, data);
+						result.total_resources = abis.binary_to_variant("user_resources", data, abi_serializer_max_time, shorten_abi_errors);
 					}
 				}
 

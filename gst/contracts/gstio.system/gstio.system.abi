@@ -223,10 +223,7 @@
          {"name":"cpu_weight", "type":"asset"},
          {"name":"ram_bytes", "type":"uint64"},
 	       {"name":"votereward", "type":"asset"},
-         {"name":"prodreward", "type":"asset"},
-	       {"name":"del_time", "type":"time_point_sec"},
-	       {"name":"pay_time", "type":"time_point_sec"},
-	       {"name":"staked", "type":"asset"}
+         {"name":"prodreward", "type":"asset"}
       ]
     },{
       "name": "total_resources",
